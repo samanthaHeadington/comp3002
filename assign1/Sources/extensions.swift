@@ -43,7 +43,7 @@ extension Array{
             appendIfAbsent(elt);
         }
     }
-    mutating func appendIfIdenticalAbsent(_ obj: Element) where Element: AnyObject{
+    mutating func appendIfIdenticalAbsent(_ obj: Element) where Element : AnyObject{
         for elt: Element in self{
             if(elt === obj){
                 return;

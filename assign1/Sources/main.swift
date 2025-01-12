@@ -9,10 +9,13 @@ func a1(){
     }
 }
 
-class Thing{
+class Thing: CustomStringConvertible{
     var name: String?;
     init(name: String){
         self.name = name;
+    }
+    var description: String {
+        return "Thing named \(name!)";
     }
 }
 
@@ -41,28 +44,28 @@ func a2(){
 func a3(){
     let str: String = "test";
     // print(str[1]);
-    print(str[str.index(str.startIndex, offsetBy: 1)]);
-    print(Array(str)[1]);
+    print(str, "at 1 using String.index:", str[str.index(str.startIndex, offsetBy: 1)]);
+    print(str, "at 1 using Array conversion:", Array(str)[1]);
 }
 
 func a4(){
     let arr: [Int] = [1,2,3,4,5];
-    print(arr.collect{$0.squared()});
-    print(arr.select{$0.odd()});
+    print("[1,2,3,4,5] squared:", arr.collect{$0.squared()});
+    print("[1,2,3,4,5] odd:", arr.select{$0.odd()});
 
-    print(arr.map{$0.squared()});
-    print(arr.filter{$0.odd()});
+    print("[1,2,3,4,5] squared (built-in map()):", arr.map{$0.squared()});
+    print("[1,2,3,4,5] odd (built-in filter()):", arr.filter{$0.odd()});
 }
 
 func a5(){
-    print([1,2,3,4,5,6,7,8,9].partitionUsing{$0.odd()});
-    print(["Hi", "all", "guys", "and", "gals"].partitionUsing{Array($0)[0]});
+    print([1,2,3,4,5,6,7,8,9].partitionUsing{$0.odd()} as! [Bool : [Int]]);
+    print(["Hi", "all", "guys", "and", "gals"].partitionUsing{Array($0)[0]} as! [Character: [String]]);
     print([10.5, "all", nil, [1,2], "any"].partitionUsing{
         if($0 == nil){
             return "Undefined"
         }
         return "\(type(of: $0!))";
-    })
+    } as! [String: [Any?]])
 }
 
 func a6(){
@@ -77,13 +80,12 @@ func a6(){
 
     var things: [Thing] = [Thing(name: "1"), Thing(name: "2")];
     print(things);
-    arr.appendIfIdenticalAbsent();
-    print("After appendIfAbsent(1)", arr);
-    arr.appendIfAbsent(3);
-    print("After appendIfAbsent(3)", arr);
-    arr.appendIfAbsent([2,4]);
-    print("After appendIfAbsent([2,4])", arr);
-
+    things.appendIfIdenticalAbsent(Thing(name: "1"));
+    print(#"After appendIfIdenticalAbsent(Thing(name: "1"))"#, things);
+    things.appendIfIdenticalAbsent(things[0]);
+    print(#"After appendIfIdenticalAbsent(things[0])"#, things);
+    things.appendIfIdenticalAbsent([things[1], Thing(name: "2")]);
+    print(#"After appendIfIdenticalAbsent([things[1], Thing(name: "2")])"#, things);
 
     print("Result of hashable setEqual for [3,1,2,3], [3,1,2] is", [3,1,2].setEqual(hashable_arr: [3,1,2,3]));
     print("Result of comparable setEqual for [3,1,2,3], [3,1,2] is", [3,1,2].setEqual(comparable_arr: [3,1,2,3]));
@@ -95,12 +97,20 @@ func a6(){
 
 }
 
+print("\n1a 1st Question\n");
 a1();
+print("\n1a 2nd Question\n");
 a2();
+print("\n1a 3rd Question\n");
 a3();
+print("\n1a 4th Question\n");
 a4();
+print("\n1a 5th Question\n");
 a5();
+print("\n1a 6th Question\n");
 a6();
+
+print("\n\nTruck class testing\n");
 Truck.example1();
-Relation<Int, String>.example1();
-Relation<Int, String>.example2();
+print("\n\nRelation class testing\n");
+Relation<Int, String>.testing();
