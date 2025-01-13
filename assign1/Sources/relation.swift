@@ -98,26 +98,26 @@ class Relation<Item: Relatable, Relationship: Relatable> : CustomStringConvertib
         }
     }
 
-    func allFrom() -> Set<Item>{
-        var result: Set<Item> = Set<Item>();
+    func allFrom() -> [Item]{
+        var result: [Item] = [];
         for triple: HashableTuple<Item, Relationship> in triples{
-            result.insert(triple.triple.0);
+            result.append(triple.triple.0);
         }
         return result;
     }
 
-    func allRelationships() -> Set<Relationship>{
-        var result: Set<Relationship> = Set<Relationship>();
+    func allRelationships() -> [Relationship]{
+        var result: [Relationship] = [];
         for triple: HashableTuple<Item, Relationship> in triples{
-            result.insert(triple.triple.1);
+            result.append(triple.triple.1);
         }
         return result;
     }
 
-    func allTo() -> Set<Item>{
-        var result: Set<Item> = Set<Item>();
+    func allTo() -> [Item]{
+        var result: [Item] = [];
         for triple: HashableTuple<Item, Relationship> in triples{
-            result.insert(triple.triple.2);
+            result.append(triple.triple.2);
         }
         return result;
     }
@@ -131,19 +131,19 @@ class Relation<Item: Relatable, Relationship: Relatable> : CustomStringConvertib
     }
 
     static func example1 ()  -> Void {
-    //Relation.example1 ()
-    //First, build a relation.
-    var relation: Relation<Int,String> = Relation<Int, String>(from: [(2, "<", 3), (1, "=", 1), 
-    (3, ">", 1), (2, "<", 4), (1, "<", 5), (5, "<", 6), (2, "<", 5)]);
+        //Relation.example1 ()
+        //First, build a relation.
+        var relation: Relation<Int,String> = Relation<Int, String>(from: [(2, "<", 3), (1, "=", 1), 
+        (3, ">", 1), (2, "<", 4), (1, "<", 5), (5, "<", 6), (2, "<", 5)]);
 
-    //Second, show that the entire relation can be printed…
-    print ("\nLet relation = \(relation)")
+        //Second, show that the entire relation can be printed…
+        print ("\nLet relation = \(relation)")
 
-    //Third, show that the 3-parameter do: works…  print ("\nOne triple per line, version1 of relation is")
-    relation.do {a,b,c in print ("\n(\(a.terseDescription) \(b.terseDescription) \(c.terseDescription))")}
+        //Third, show that the 3-parameter do: works…  print ("\nOne triple per line, version1 of relation is")
+        relation.do {a,b,c in print ("\n(\(a.terseDescription) \(b.terseDescription) \(c.terseDescription))")}
 
-    //Fourth, show that the 1-parameter do: works…  print ("\nOne triple per line, version2 of relation is")
-    relation.do {triple in print ("\n(\(triple.0.terseDescription) \(triple.1.terseDescription) \(triple.2.terseDescription)) ")}
+        //Fourth, show that the 1-parameter do: works…  print ("\nOne triple per line, version2 of relation is")
+        relation.do {triple in print ("\n(\(triple.0.terseDescription) \(triple.1.terseDescription) \(triple.2.terseDescription)) ")}
     }
 
     static func example2 ()  -> Void {
@@ -170,12 +170,12 @@ class Relation<Item: Relatable, Relationship: Relatable> : CustomStringConvertib
         }
     }
 
-    //tests allFrom, allRelationships and allTo and proper set functionality
+    //tests allFrom, allRelationships and allTo, proper set functionality and proper insertion functionality
     static func example3(){
         var relation: Relation<Int,String> = Relation<Int, String>(from: [(2, "<", 3), (1, "=", 1), 
             (3, ">", 1), (2, "<", 4), (1, "<", 5), (5, "<", 6), (2, "<", 5)]);
 
-        print("Relation \(relation)");
+        print("Let relation = \(relation)");
         print("Has relations from \(relation.allFrom())");
         print("Has relationships \(relation.allRelationships())")
         print("Has relations to \(relation.allTo())");
