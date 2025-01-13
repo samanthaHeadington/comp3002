@@ -29,7 +29,9 @@ class Thingy{
 
 func a2(){
     let a: Int = 10, b: Int = 20, c: Int = 10;
-    // var bools: [Bool] = [a == b, a === b, a == c, a === c];
+    var bools: [Bool] = [10 == 10, 10 == 20];
+    print("10 == 10, 10 == 20", bools);
+    // bools = [10 === 10, 10 === 20]
     // let testEquality1 = [1,2,[3,3]] == [1,2,[3,3]];
     // let testEquality2: Bool = [1,2,[3,3]] as [Any] == [1,2,[3,3]] as [Any];
     // let testEquality3: Bool = [1,2,[3,3]] as [Equatable] == [1,2,[3,3]] as [Equatable];

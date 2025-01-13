@@ -79,7 +79,7 @@ class Relation<Item: Relatable, Relationship: Relatable> : CustomStringConvertib
         //For you to fill in the code. Note that froms is NOT a keyword but relationsDo: is a keyword.
 
         //appends all relations where the from item is in froms to relations_from
-        var relations_from: [HashableTuple<Item, Relationship>] = triples.filter {froms.contains($0.from)};
+        let relations_from: [HashableTuple<Item, Relationship>] = triples.filter {froms.contains($0.from)};
 
         //partititions relations_from by relationship
         let from_map: [AnyHashable : [HashableTuple<Item, Relationship>]] = relations_from.partitionUsing { return $0.relationship; };
@@ -87,6 +87,7 @@ class Relation<Item: Relatable, Relationship: Relatable> : CustomStringConvertib
         //forced cast to convert mapping from [AnyHashable : [HashableTuple<Item, Relationship>]] to [Relationship : [HashableTuple<Item, Relationship>]]
         //this is necessary for input to relationsDo()
         for mapping: (key: Relationship, value: [HashableTuple<Item, Relationship>]) in from_map as! [Relationship : [HashableTuple<Item, Relationship>]]{
+            //this maps the HashableTuples back to regular tuples to match the expectation of the Relation init function
             let subrelation: Relation<Item, Relationship> = Relation(from: mapping.value.map{($0.from, $0.relationship, $0.to)});
             relationsDo(mapping.key, subrelation);
         }
