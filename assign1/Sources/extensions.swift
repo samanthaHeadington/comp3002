@@ -107,7 +107,7 @@ extension Array{
     }
 }
 
-extension Int: Relatable{
+extension Int{
     func squared() -> Int{
         return self * self;
     }
@@ -115,5 +115,3 @@ extension Int: Relatable{
         return self % 2 == 1;
     }
 }
-
-extension String: Relatable{}

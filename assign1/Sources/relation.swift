@@ -7,20 +7,24 @@ class Utilities {
  } 
 }
 
-//hashable wrapper class for Item, Relationship, Item tuples
+extension Int: Relatable{}
+extension String: Relatable{}
+
+//hashable wrapper for Item, Relationship, Item tuples
 //swift doesn't allow extensions for tuples
-class HashableTuple<Item: Relatable, Relationship: Relatable>: Hashable{
-    var triple: (Item, Relationship, Item);
+struct HashableTuple<Item: Relatable, Relationship: Relatable>: Hashable{
+    var from: Item;
+    var relationship: Relationship;
+    var to: Item;
+
     init(_ triple: (Item, Relationship, Item)){
-        self.triple = triple;
+        self.from = triple.0;
+        self.relationship = triple.1;
+        self.to = triple.2;
     }
-    func hash(into hasher: inout Hasher) {
-        hasher.combine(triple.0);
-        hasher.combine(triple.1);
-        hasher.combine(triple.2);
-    }
-    static func ==(lhs: HashableTuple, rhs: HashableTuple) -> Bool{
-        return (lhs.triple.0 == rhs.triple.0) && (lhs.triple.1 == rhs.triple.1) && (lhs.triple.2 == rhs.triple.2);
+
+    func toTuple() -> (Item, Relationship, Item){
+        return (from, relationship, to);
     }
 }
  
@@ -43,10 +47,8 @@ class Relation<Item: Relatable, Relationship: Relatable> : CustomStringConvertib
     
     init(from triples: [(Item, Relationship, Item)]) {//Array of tuples
         //USAGE: let relation2 = Relation<Int,String> (from: [(10, "<", 20), (10, "<", 30)])
-        self.triples = Set ()
-        for triple: (Item, Relationship, Item) in triples{
-            self.triples.insert(HashableTuple<Item, Relationship>(triple));
-        }
+        //creates set out of triples array after mapping tuples to HashableTuples
+        self.triples = Set (triples.map{HashableTuple<Item, Relationship>($0)})
     }
     
     init(from triples: Set <HashableTuple<Item, Relationship>>) {//Set of tuples
@@ -56,19 +58,19 @@ class Relation<Item: Relatable, Relationship: Relatable> : CustomStringConvertib
     var description: String { 
         //Output format: Relation(from [(a1 b1 c1) (a2 b2 c2) …]).
         let triplesDescription = triples.map {
-            "(\($0.triple.0.terseDescription) \($0.triple.1.terseDescription) \($0.triple.2.terseDescription))" } 
+            "(\($0.from.terseDescription) \($0.relationship.terseDescription) \($0.to.terseDescription))" } 
         return "Relation(from: [\(triplesDescription.joined(separator: ", "))])" 
     }  
 
     func `do`(_ operation: (Item, Relationship, Item) -> Void){
         for triple: HashableTuple<Item, Relationship> in triples{
-            operation(triple.triple.0, triple.triple.1, triple.triple.2);
+            operation(triple.to, triple.relationship, triple.to);
         }
     }
 
     func `do`(_ operation: ((Item, Relationship, Item)) -> Void){
         for triple: HashableTuple<Item, Relationship> in triples{
-            operation(triple.triple);
+            operation(triple.toTuple());
         }
     }
 
@@ -77,49 +79,29 @@ class Relation<Item: Relatable, Relationship: Relatable> : CustomStringConvertib
         //For you to fill in the code. Note that froms is NOT a keyword but relationsDo: is a keyword.
 
         //appends all relations where the from item is in froms to relations_from
-        var relations_from: [HashableTuple<Item, Relationship>] = [];
-        for triple: HashableTuple<Item, Relationship> in triples{
-            if(froms.contains(triple.triple.0)){
-                relations_from.append(triple);
-            }
-        }
+        var relations_from: [HashableTuple<Item, Relationship>] = triples.filter {froms.contains($0.from)};
 
         //partititions relations_from by relationship
-        let from_map: [AnyHashable : [HashableTuple<Item, Relationship>]] = relations_from.partitionUsing { return $0.triple.1; };
+        let from_map: [AnyHashable : [HashableTuple<Item, Relationship>]] = relations_from.partitionUsing { return $0.relationship; };
 
         //forced cast to convert mapping from [AnyHashable : [HashableTuple<Item, Relationship>]] to [Relationship : [HashableTuple<Item, Relationship>]]
         //this is necessary for input to relationsDo()
         for mapping: (key: Relationship, value: [HashableTuple<Item, Relationship>]) in from_map as! [Relationship : [HashableTuple<Item, Relationship>]]{
-            let subrelation: Relation<Item, Relationship> = Relation();
-            for triple: HashableTuple<Item, Relationship> in mapping.value{
-                subrelation.addTriple(triple.triple);
-            }
+            let subrelation: Relation<Item, Relationship> = Relation(from: mapping.value.map{($0.from, $0.relationship, $0.to)});
             relationsDo(mapping.key, subrelation);
         }
     }
 
     func allFrom() -> [Item]{
-        var result: [Item] = [];
-        for triple: HashableTuple<Item, Relationship> in triples{
-            result.append(triple.triple.0);
-        }
-        return result;
+        return triples.map {$0.from};
     }
 
     func allRelationships() -> [Relationship]{
-        var result: [Relationship] = [];
-        for triple: HashableTuple<Item, Relationship> in triples{
-            result.append(triple.triple.1);
-        }
-        return result;
+        return triples.map {$0.relationship};
     }
 
     func allTo() -> [Item]{
-        var result: [Item] = [];
-        for triple: HashableTuple<Item, Relationship> in triples{
-            result.append(triple.triple.2);
-        }
-        return result;
+        return triples.map {$0.to};
     }
 
     func add(_ from: Item, and relation: Relationship, and to: Item){
