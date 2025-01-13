@@ -64,7 +64,7 @@ class Relation<Item: Relatable, Relationship: Relatable> : CustomStringConvertib
 
     func `do`(_ operation: (Item, Relationship, Item) -> Void){
         for triple: HashableTuple<Item, Relationship> in triples{
-            operation(triple.to, triple.relationship, triple.to);
+            operation(triple.from, triple.relationship, triple.to);
         }
     }
 
@@ -93,15 +93,15 @@ class Relation<Item: Relatable, Relationship: Relatable> : CustomStringConvertib
     }
 
     func allFrom() -> [Item]{
-        return triples.map {$0.from};
+        return Array(Set(triples.map {$0.from})); //conversion to and from set removes duplicates
     }
 
     func allRelationships() -> [Relationship]{
-        return triples.map {$0.relationship};
+        return Array(Set(triples.map {$0.relationship})); //conversion to and from set removes duplicates
     }
 
     func allTo() -> [Item]{
-        return triples.map {$0.to};
+        return Array(Set(triples.map {$0.to})); //conversion to and from set removes duplicates
     }
 
     func add(_ from: Item, and relation: Relationship, and to: Item){
@@ -123,6 +123,8 @@ class Relation<Item: Relatable, Relationship: Relatable> : CustomStringConvertib
 
         //Third, show that the 3-parameter do: works…  print ("\nOne triple per line, version1 of relation is")
         relation.do {a,b,c in print ("\n(\(a.terseDescription) \(b.terseDescription) \(c.terseDescription))")}
+
+        print("\n");
 
         //Fourth, show that the 1-parameter do: works…  print ("\nOne triple per line, version2 of relation is")
         relation.do {triple in print ("\n(\(triple.0.terseDescription) \(triple.1.terseDescription) \(triple.2.terseDescription)) ")}
