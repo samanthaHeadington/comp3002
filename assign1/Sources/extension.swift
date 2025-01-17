@@ -4,10 +4,10 @@ extension Array{
             operation(elt);
         }
     }
-    func partitionUsing(separator: ((Element) -> AnyHashable)) -> [AnyHashable : [Element]]{
-        var result: [AnyHashable: [Element]] = [:];
+    func partitionUsing(separator: ((Element) -> Key)) -> [Key : [Element]] where Key: Hashable{
+        var result: [Key: [Element]] = [:];
         for elt: Element in self{
-            let key: AnyHashable = separator(elt);
+            let key: Key = separator(elt);
             if(result[key] == nil){
                 result[key] = [];
             }

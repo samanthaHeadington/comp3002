@@ -35,6 +35,24 @@
             "name": "Release Assignment1 (assign1)",
             "program": "${workspaceFolder:comp3002}/assign1/.build/release/Assignment1",
             "preLaunchTask": "swift: Build Release Assignment1 (assign1)"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:comp3002}/assign2",
+            "name": "Debug Assignment2 (assign2)",
+            "program": "${workspaceFolder:comp3002}/assign2/.build/debug/Assignment2",
+            "preLaunchTask": "swift: Build Debug Assignment2 (assign2)"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:comp3002}/assign2",
+            "name": "Release Assignment2 (assign2)",
+            "program": "${workspaceFolder:comp3002}/assign2/.build/release/Assignment2",
+            "preLaunchTask": "swift: Build Release Assignment2 (assign2)"
         }
     ]
 }
