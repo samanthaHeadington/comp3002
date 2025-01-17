@@ -1,3 +1,5 @@
+RelationBuilder<Int, String>.example1();
+
 var translator: SampleTranslator = SampleTranslator();
 var user_input: String?;
 while(user_input != "exit"){
