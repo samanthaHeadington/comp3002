@@ -1,10 +1,10 @@
 RelationBuilder<Int, String>.example1();
 
-var translator: SampleTranslator = SampleTranslator();
+let translator: SampleTranslator = SampleTranslator();
 var user_input: String?;
-while(user_input != "exit"){
+while(user_input != "quit"){
     print("Evalute: ")
     user_input = readLine();
-    print(translator.evaluate(text: user_input!)!);
-    print(translator.variableDictionary);
+    print("Compile: \(translator.compile(text: user_input!))")
+    print("Result: \(translator.evaluate(text: user_input!)!)");
 }

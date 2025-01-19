@@ -29,7 +29,6 @@ public final class SampleTranslator: Translator {
       Swift.print(content)
     }
   }
-  var expressionsIfEvaluator: [String: Any]?
   var compilationOperatorMap: [String: compileClosure]?
   var evaluationOperatorMap: [String: evaluateClosure]?
     
@@ -37,16 +36,18 @@ public final class SampleTranslator: Translator {
   public func performAction(_ :String, _ :[Any]) -> Void {}
 
   init() {
-    parser = Parser(sponsor: self, parserTables: parserTables, scannerTables: scannerTables)
+    resetParser();
     // codeIfCompiler <- not sure what this does
     // codeIfCompiler = TextOutputStream()
-    expressionsIfEvaluator = Dictionary() // each key is a variable
     compilationOperatorMap = [
       "+": compilePlus,
       "*": compileMultiply,
+      "-": compileMinus,
+      "/": compileDivide,
       "<-": compileAssign,
       "Identifier": compileIdentifier,
       "Integer": compileInteger,
+      "where": compileWhere,
       "send": compileFunctionCall,
     ]
     evaluationOperatorMap = [
@@ -62,6 +63,11 @@ public final class SampleTranslator: Translator {
     ]
   }
 
+  // reinitializes the parser after each compilation/evaluation to prevent crashing
+  func resetParser(){
+    parser = Parser(sponsor: self, parserTables: parserTables, scannerTables: scannerTables)
+  }
+
   func compile(text: String) -> String {
       tree = parser!.parse(text)
       guard tree != nil else {
@@ -69,6 +75,9 @@ public final class SampleTranslator: Translator {
         return ""
       }
       compileExpressionFor(tree!)
+
+      resetParser();
+
       return codeIfCompiler.content
   }
 
@@ -93,12 +102,37 @@ public final class SampleTranslator: Translator {
     generate(instruction: "MULTIPLY")
   }
 
+  func compileMinus(_ tree: VirtualTree) -> Void {
+    let t = tree as! Tree
+    compileExpressionFor(t.children[0])
+    compileExpressionFor(t.children[1])
+    generate(instruction: "MINUS")
+  }
+
+  func compileDivide(_ tree: VirtualTree) -> Void{
+    let t = tree as! Tree
+    compileExpressionFor(t.children[0])
+    compileExpressionFor(t.children[1])
+    generate(instruction: "DIVIDE")
+  }
+
   func compileAssign(_ tree: VirtualTree) -> Void {
     let t = tree as! Tree
     for index in t.children.indices {
       compileExpressionFor(t.children[index])
       generate(instruction: "POP")
     }
+  }
+
+  func compileWhere(_ tree: VirtualTree) -> Void{
+    let t: Tree = tree as! Tree;
+
+    compileExpressionFor(t.children[1]);
+
+    compileExpressionFor(t.children[0]);
+
+    generate(instruction: "WHERE");
+
   }
 
   func compileIdentifier(_ token: VirtualTree) -> Void {
@@ -143,11 +177,15 @@ public final class SampleTranslator: Translator {
       }
 
       print("\(tree)");
+
+      // reset the parser so it can handle the next request
+      resetParser();
+
       let result = evaluateExpressionFor(tree!) // see result and variable dictionary
-      if expressionsIfEvaluator!.count == 0 {
+      if variableDictionary.count == 0 {
         return "\(result)" 
       } else {
-        return expressionsIfEvaluator
+        return "\(result)\n" + "\(variableDictionary)";
       }
   }
 
@@ -188,11 +226,7 @@ public final class SampleTranslator: Translator {
 
     let identifier = t.symbol
 
-    if(variableDictionary[identifier] != nil){
-      return variableDictionary[identifier]!;
-    }
-
-    return 0;
+    return variableDictionary[identifier]!;
   }
 
   func evaluateInteger(_ token: VirtualTree) -> Int {
@@ -204,15 +238,15 @@ public final class SampleTranslator: Translator {
     let t = tree as! Tree;
     var token: Token = t.children[0] as! Token;
 
-    for i in 1..<t.children.count{
-      if(i % 2 == 0){
-        token = t.children[i] as! Token;
-      }else{
-        variableDictionary[token.symbol] = evaluateExpressionFor(t.children[i]);
-      }
+    //(1..<t.children.count).filter {!$0.odd()}
+
+    // range of i is filtered since the identifiers are the even children of the assignment token
+    for i in (0..<t.children.count).filter({!$0.odd()}){
+      token = t.children[i] as! Token;
+      variableDictionary[token.symbol] = evaluateExpressionFor(t.children[i+1]);
     }
 
-    return 0;
+    return variableDictionary[token.symbol]!;
   }
 
 
@@ -220,7 +254,7 @@ public final class SampleTranslator: Translator {
     let t = tree as! Tree;
 
     // evaluate right child of where statement (variable assignment) first
-    evaluateExpressionFor(t.children[1]);
+    _ = evaluateExpressionFor(t.children[1]);
 
     // once variable assignment is performed, evaluate left child (expression)
     return evaluateExpressionFor(t.children[0]);

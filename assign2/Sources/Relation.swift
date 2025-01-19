@@ -12,7 +12,7 @@ extension String: Relatable{}
 
 //hashable wrapper for Item, Relationship, Item tuples
 //swift doesn't allow extensions for tuples
-struct HashableTuple<Item: Relatable, Relationship: Relatable>: Hashable{
+struct HashableTuple<Item: Relatable, Relationship: Relatable>: Hashable, CustomStringConvertible{
     var from: Item;
     var relationship: Relationship;
     var to: Item;
@@ -25,6 +25,10 @@ struct HashableTuple<Item: Relatable, Relationship: Relatable>: Hashable{
 
     func toTuple() -> (Item, Relationship, Item){
         return (from, relationship, to);
+    }
+
+    var description: String {
+        return "(\(from.terseDescription) \(relationship.terseDescription) \(to.terseDescription))" 
     }
 }
  
@@ -58,7 +62,7 @@ class Relation<Item: Relatable, Relationship: Relatable> : CustomStringConvertib
     var description: String { 
         //Output format: Relation(from [(a1 b1 c1) (a2 b2 c2) …]).
         let triplesDescription = triples.map {
-            "(\($0.from.terseDescription) \($0.relationship.terseDescription) \($0.to.terseDescription))" } 
+            "\($0)"} 
         return "Relation(from: [\(triplesDescription.joined(separator: ", "))])" 
     }  
 
@@ -82,11 +86,11 @@ class Relation<Item: Relatable, Relationship: Relatable> : CustomStringConvertib
         let relations_from: [HashableTuple<Item, Relationship>] = triples.filter {froms.contains($0.from)};
 
         //partititions relations_from by relationship
-        let from_map: [AnyHashable : [HashableTuple<Item, Relationship>]] = relations_from.partitionUsing { return $0.relationship; };
+        let from_map: [Relationship : [HashableTuple<Item, Relationship>]] = relations_from.partitionUsing { return $0.relationship; };
 
         //forced cast to convert mapping from [AnyHashable : [HashableTuple<Item, Relationship>]] to [Relationship : [HashableTuple<Item, Relationship>]]
         //this is necessary for input to relationsDo()
-        for mapping: (key: Relationship, value: [HashableTuple<Item, Relationship>]) in from_map as! [Relationship : [HashableTuple<Item, Relationship>]]{
+        for mapping: (key: Relationship, value: [HashableTuple<Item, Relationship>]) in from_map{
             //this maps the HashableTuples back to regular tuples to match the expectation of the Relation init function
             let subrelation: Relation<Item, Relationship> = Relation(from: mapping.value.map{($0.from, $0.relationship, $0.to)});
             relationsDo(mapping.key, subrelation);

@@ -74,8 +74,8 @@ public class Tree: VirtualTree {
 }
 
 public class Token: VirtualTree, Hashable, Equatable {
-    var label: String;
-    var symbol: String;
+    var label: String
+    var symbol: String
     nonisolated(unsafe) static let sharedEmpty = Token(label: "Unknown", symbol: "")
 
     init(label: String, symbol: String) {
@@ -124,17 +124,6 @@ struct Pair<T: Hashable, U: Hashable>: Hashable {
         (first, second) = pair
     }
 }
-
-// extension Dictionary where Key == Pair<Key.T, Key.U> {
-//     subscript(key: (Key.T, Key.U)) -> Value? {
-//         get {return self[Pair(key)]}
-//         set {self[Pair(key)] = newValue}
-//     }
-//     subscript(key0: Key.T, key1: Key.U) -> Value? {
-//         get {return self[Pair((key0, key1))]}
-//         set {self[Pair((key0, key1))] = newValue}
-//     }
-// }
 
 //All table types...
 enum TableType: String {
@@ -277,8 +266,9 @@ class SemanticTable: Table {
         self.transducer!.performAction(action, parameters)
         } else if transducer!.sponsor!.canPerformAction(action) {
         self.transducer!.sponsor!.performAction(action, parameters)
-         } else {
-	    error ("Semantic action \"\(action)\" needs to be added to " + "canPerformAction in \(type(of: transducer!.sponsor!))")
+     } else {
+	    error ("Semantic action \"\(action)\" needs to be added to " +
+	      "canPerformAction in \(type(of: transducer!.sponsor!))")
         }
         return goto
     }
@@ -321,6 +311,7 @@ class ReadaheadTable: Table, TableWithTransitionsWithStringKey {
         }
         parser.discardScannerToken()
         if isStack {
+            debug("     tableNumberStack    \(parser.tableNumberStack)")
             parser.tokenStack.append(token)
             parser.tableNumberStack.append(goto)
             parser.treeStack.append(isNode ? token : nil)
@@ -459,6 +450,7 @@ class ReduceTable: Table, TableWithTransitionsWithIntKey {
         // Case3: Use the attributes as you did for a Readaheadtable
         //        + create a new token using the nonterminal as a symbol
         //        + adjust `left` and `right`
+        debug("             \(parser.tableNumberStack)");
         let tableNumber = parser.tableNumberStack.last!
         debug ("Looking for \(tableNumber) + \(nonterminal) -> ?")
             
@@ -572,7 +564,7 @@ public final class Scanner: Transducer {
     var start: String.Index?
     var current: String.Index?
 
-    // static let sharedEmpty = Scanner()
+    nonisolated(unsafe) static let sharedEmpty = Scanner()
 
     private func isAtEnd() -> Bool {
         if let input = input {
@@ -716,6 +708,8 @@ public final class Parser: Transducer {
         
         // Give the entire set of scanner tables to the scanner
         self.scanner.registerTables(rawTables: scannerTables)
+
+        debug("     parser init \(treeStack)\n   \(tableNumberStack)\n   \(left) \(right)\n   \(newTree)");
     }
     
     private func registerTables(rawTables: Array<Any>) -> Void {
@@ -749,22 +743,34 @@ public final class Parser: Transducer {
         //Once that happen, the tree that was built should be on top of the tree
         //stack. Just return it. If you look at the Accept table, you will see
         //that of all the tables, it is the only one that returns nil. You can
-        //use that information to stop your loop.
-             
+        //use that information to stop your loop.             
         scanner.scanTokens(text)
-        var index: Int? = 1
-        var table = tables[index!]!
+        var index: Int = 1
+        var table = tables[index]!
             
         while table.tableType != .AcceptTable {
+            debug("     tableNumberStack    \(self.tableNumberStack)")
+
             do {
                 debug("Parser \(table.tableType) #\(index) is running...\n")
-                index = try table.run() // The result returned is the next table to run
+                index = try table.run()! // The result returned is the next table to run
                 debug("\tgoing to #\(index)...\n")
-                table = tables[index!]!
+                table = tables[index]!
             } catch {
                 print("Syntax error") //See Smalltalk version for more detailed error message
             }
+
+            debug("     tableNumberStack    \(self.tableNumberStack)")
         }
+
+        debug("     parse complete \(treeStack)\n   \(tableNumberStack)\n   \(left) \(right)\n   \(newTree)");
+
+        // let return_val = treeStack.last!;
+
+        // tableNumberStack = [1];
+        // treeStack = [nil]
+        //left = 0   // left, right has to do with a treeStack
+        //right = 0
             
         return treeStack.last!
     }
