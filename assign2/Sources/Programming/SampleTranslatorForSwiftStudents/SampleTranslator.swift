@@ -130,9 +130,6 @@ public final class SampleTranslator: Translator {
     compileExpressionFor(t.children[1]);
 
     compileExpressionFor(t.children[0]);
-
-    generate(instruction: "WHERE");
-
   }
 
   func compileIdentifier(_ token: VirtualTree) -> Void {
@@ -183,9 +180,9 @@ public final class SampleTranslator: Translator {
 
       let result = evaluateExpressionFor(tree!) // see result and variable dictionary
       if variableDictionary.count == 0 {
-        return "\(result)" 
+        return result
       } else {
-        return "\(result)\n" + "\(variableDictionary)";
+        return (result, variableDictionary);
       }
   }
 

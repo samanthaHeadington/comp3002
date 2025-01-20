@@ -11,21 +11,28 @@ class RelationBuilder<Item: Relatable, Relationship: Relatable> : CustomStringCo
         self.down = Relation<Item, Relationship>(from: down);
     }
 
-    func from(_ froms: [Item], relationsDo: (Relationship, Relation<Item, Relationship>) -> Void){
+    // downRelationsDo is an optional closure, either relationsDo is used for but relationships, or relationsDo is used for right and downRelationsDo is used for down
+    func from(_ froms: [Item], relationsDo: (Relationship, Relation<Item, Relationship>) -> Void, downRelationsDo: ((Relationship, Relation<Item, Relationship>) -> Void)? = nil){
         right.from(froms, relationsDo: relationsDo);
-        down.from(froms, relationsDo: relationsDo);
+        down.from(froms, relationsDo: (downRelationsDo != nil) ? downRelationsDo! : relationsDo);
     }
 
     static func example1(){
-        var relation_builder: RelationBuilder<Int, String> = RelationBuilder<Int, String>(
+        let relation_builder: RelationBuilder<Int, String> = RelationBuilder<Int, String>(
             right: [(1, "|-", 2), (2, "G", 3), (3, "-|", 4), (5, "A", 6), (6, "c", 6), (7, "a", 7), (7, "b", 8)],
             down: [(2, "G", 5), (5, "A", 7)]
         );
 
         print("\(relation_builder)");
 
-        relation_builder.from([2,5,7,8]){ relationship, relation in
-            print("Subrelation \(relationship) maps to \(relation.allTo())");
+        relation_builder.from([2,5,7,8], relationsDo: { relationship, relation in
+            print("Maps to \(relation.allTo()) under \(relationship) right");
+        }, downRelationsDo: {relationship, relation in
+            print("Maps to \(relation.allTo()) under \(relationship) down");
+        })
+
+        relation_builder.from([2,5,7,8]) { relationship, relation in
+            print("Maps to \(relation.allTo()) under \(relationship)");
         }
     }
 }
