@@ -162,7 +162,7 @@ public class Transition : CustomStringConvertible{
     }
 
 }
-
+//
 public class AttributeList : CustomStringConvertible{
     var isRead: Bool = false
     var isStack: Bool = false

@@ -155,7 +155,7 @@ public final class FSMBuilder : Translator {
 
         return 0
     }
-    
+    //
     func walkIdentifier (_ tree : VirtualTree) -> Any {
 
         var return_val : FiniteStateMachine;
