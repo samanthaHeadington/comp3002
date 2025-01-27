@@ -20,3 +20,5 @@ print(Grammar.defaultsFor("#A"));
 // part 2
 
 print(FSMBuilder.example1(parserFSM: parserInput, scannerFSMs: scannerInput));
+
+Relation<Int, String>.example4();

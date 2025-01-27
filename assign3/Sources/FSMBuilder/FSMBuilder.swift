@@ -107,7 +107,7 @@ public final class FSMBuilder : Translator {
                 print(text);
                 builder.process (text)
                 text = scannerFSMs;
-                //builder.process (text)
+                builder.process (text)
             } catch {
                 print ("File not found")
             }
@@ -119,12 +119,15 @@ public final class FSMBuilder : Translator {
     func processTypeNow (_ parameters:[Any]) -> Void {
           //The child will be a walkString with "scanner" or "parser"
         let type = parameters [0] as? String;
+        print(parameters[0]);
         if(type != nil){
-            Grammar.activeGrammar!.type = type!;
+            Grammar.activeGrammar!.type = type!.trimmingCharacters(in: .whitespacesAndNewlines);
         }
     }
       
     func walkList (_ tree: VirtualTree) -> Any {
+        print(Grammar.activeGrammar!.type);
+
         let treeList = (tree as? Tree)!
         var index = 0;
         print("\(tree)");
@@ -154,6 +157,7 @@ public final class FSMBuilder : Translator {
     }
     
     func walkIdentifier (_ tree : VirtualTree) -> Any {
+
         var return_val : FiniteStateMachine;
 
         let symbol : String = (tree as! Token).symbol;
@@ -161,29 +165,26 @@ public final class FSMBuilder : Translator {
         if(fsmMap[symbol] != nil){
             return_val = FiniteStateMachine(fsm: fsmMap[symbol]!);
         }else{
-            return_val = FiniteStateMachine();
-            let new_state = FiniteStateMachineState();
-            new_state.addTransition(name: symbol, attributes: Grammar.defaultsFor(symbol));
-            return_val.addState(new_state)
+            return_val = FiniteStateMachine.forIdentifier(symbol);
         }
 
         return return_val;
     }
     func walkCharacter (_ tree : VirtualTree) -> Any {
-        return Character(Unicode.Scalar((tree as! Token).symbol)!);
+        return FiniteStateMachine.forCharacter((tree as! Token).symbol);
     }
     func walkString (_ tree : VirtualTree) -> Any {
-        return (tree as! Token).symbol
+        return FiniteStateMachine.forString((tree as! Token).symbol)
     }
     func walkSymbol (_ tree : VirtualTree) -> Any {
-      return (tree as! Token).symbol
+      return FiniteStateMachine.forSymbol((tree as! Token).symbol)
     }
     func walkInteger (_ tree : VirtualTree) -> Any {
-      return Int((tree as! Token).symbol)!;
+      return FiniteStateMachine.forInteger(((tree as! Token).symbol));
     }
     func walkAttributes (_ tree : VirtualTree) -> Any {
         let t = tree as! Tree;
-        var return_val : FiniteStateMachine = walkIdentifier(t.child(0)) as! FiniteStateMachine;
+        var return_val : FiniteStateMachine = walkTree(t.child(0)) as! FiniteStateMachine;
         
         var attributes : [String] = [];
         for i in 1..<t.children.count{
@@ -196,7 +197,7 @@ public final class FSMBuilder : Translator {
     }
 
     func walkBuildTreeOrTokenFromName (_ tree : VirtualTree) -> Any {
-        return walkSemanticAction(constructSemanticTree(tree, action: "buildTree"), treeBuilding: true)
+        return walkSemanticAction(constructSemanticTree(tree, action: (Grammar.activeGrammar!.isScanner()) ? "buildToken" : "buildTree"), treeBuilding: true)
     }
 
     func walkBuildTreeFromLeftIndex(_ tree : VirtualTree) -> Any{
@@ -228,21 +229,24 @@ public final class FSMBuilder : Translator {
         return walkSemanticAction((tree as! Tree).child(0) as! Tree, treeBuilding: false);
     }
     func walkSemanticAction(_ tree : Tree, treeBuilding : Bool) -> FiniteStateMachine {
-        var return_val = FiniteStateMachine();
 
-        return_val.addState(FiniteStateMachineState());
+        //return_val.addState(FiniteStateMachineState());
 
-        return_val.states[0].addSemanticAction(action : walkTree(tree.child(0)) as! String, parameters: []);
+        //return_val.states[0].addSemanticAction(action : walkTree(tree.child(0)) as! String, parameters: []);
+
+        var parameters : [Any] = [];
 
         for i in 1..<tree.children.count{
-            return_val.states[0].transitions[0].parameters.append(walkTree(tree.child(i)));
+            parameters.append((walkTree(tree.child(i)) as! FiniteStateMachine).states[0].transitions[0].name);
         }
 
-        return return_val;
+        var action = (walkTree(tree.child(0)) as! FiniteStateMachine).states[0].transitions[0].name;
+
+        return FiniteStateMachine.forAction(action, parameters: parameters, isRootBuilding: treeBuilding);
     }
 
     func walkLook (_ tree : VirtualTree) -> Any {
-        var return_val = walkIdentifier((tree as! Tree).child(0)) as! FiniteStateMachine;
+        var return_val = walkTree((tree as! Tree).child(0)) as! FiniteStateMachine;
 
         return_val.states[0].transitions[0].attributes.isRead = false;
 

@@ -30,15 +30,62 @@ public class FiniteStateMachine : CustomStringConvertible {
         }
     }
 
+    func override (_ attributes: AttributeList) {
+        for state in states {
+            for transition in state.transitions {
+                transition.attributes = AttributeList(attributes: attributes)
+            }
+        }
+    }
+
     func renumber () {
        for (index, state) in states.enumerated() {
           state.stateNumber = index
        }
     }
 
-    func addState(_ state: FiniteStateMachineState){
-        state.stateNumber = states.count;
-        states.append(state);
+    static func forAction(_ action : String, parameters : Array<Any>, isRootBuilding : Bool) -> FiniteStateMachine{
+        var transition = Transition(action: action, parameters: parameters, isRootBuilding : isRootBuilding);
+
+        return fromTransition(transition);
+    }
+
+    static func forIdentifier(_ identifer : String) -> FiniteStateMachine{
+        return fromTransition(Transition(name: identifer));
+    }
+
+    static func forSymbol(_ symbol : String) -> FiniteStateMachine{
+        return fromTransition(Transition(name: symbol));
+    }
+
+    static func forString(_ string : String) -> FiniteStateMachine{
+        return fromTransition(Transition(name: string));
+    }
+
+    static func forCharacter(_ character : String) -> FiniteStateMachine{
+        var name = character;
+        name.insert(contentsOf: "$", at: name.startIndex);
+        return fromTransition(Transition(name: name))
+    }
+
+    static func forInteger(_ integer : String) -> FiniteStateMachine{
+        return fromTransition(Transition(name: integer));
+    }
+
+    static func fromTransition(_ transition : Transition) -> FiniteStateMachine{
+        var return_val = FiniteStateMachine();
+
+        return_val.states.append(FiniteStateMachineState());
+        return_val.states.append(FiniteStateMachineState());
+
+        return_val.renumber();
+
+        return_val.states[0].transitions.append(transition);
+        transition.goto = return_val.states[1];
+
+        return_val.override(Grammar.defaultsFor(transition.name));
+
+        return return_val;
     }
 
     public var description: String {
@@ -56,25 +103,11 @@ public class FiniteStateMachineState : CustomStringConvertible {
         transitions = [];
     }
 
-    init (state_number: Int) {
-        stateNumber = state_number;
-        transitions = []
-    }
-
     init(state: FiniteStateMachineState){
         stateNumber = state.stateNumber;
         isInitial = state.isInitial;
         isFinal = state.isFinal;
         transitions = state.transitions.map{return Transition(transition: $0)};
-    }
-
-    func addTransition(name : String, attributes : AttributeList, goto : FiniteStateMachineState? = nil){
-        transitions.append(Transition(name: name, goto: (goto == nil) ? self : goto!));
-        transitions[transitions.count - 1].attributes = attributes;
-    }
-
-    func addSemanticAction(action : String, parameters : Array<Any>){
-        transitions.append(Transition(action: action, parameters: parameters))
     }
 
     public var description : String {
@@ -91,16 +124,16 @@ public class Transition : CustomStringConvertible{
     var action: String = ""
     var parameters: Array<Any> = []
     var isRootBuilding: Bool = false
-    var goto: FiniteStateMachineState
+    var goto: FiniteStateMachineState = FiniteStateMachineState();
 
-    init(name : String, goto : FiniteStateMachineState){
+    init(name : String){
         self.name = name;
-        self.goto = goto;
     }
 
-    init(action : String, parameters : Array<Any>){
+    init(action : String, parameters : Array<Any>, isRootBuilding : Bool){
         self.action = action;
-        goto = FiniteStateMachineState();
+        self.isRootBuilding = isRootBuilding;
+        self.parameters = parameters;
     }
 
     init(transition: Transition){
@@ -109,7 +142,7 @@ public class Transition : CustomStringConvertible{
         action = transition.action;
         parameters = transition.parameters;
         isRootBuilding = transition.isRootBuilding;
-        goto = FiniteStateMachineState(state_number: 0); // temp endpoint
+        goto = FiniteStateMachineState(); // temp endpoint
     }
     
     func hasAttributes () -> Bool {return name != ""}
@@ -121,11 +154,11 @@ public class Transition : CustomStringConvertible{
     }
 
     public var description: String{
-        return (action == "") ? 
-            "    \(name) \"\(attributes)\"\n" +
-            "goto \(goto.stateNumber)"
+        return ((action == "") ? 
+            "    \(name) \"\(attributes)\""
         :
-            "    \(action) \"\(parameters)\"";
+            "    \(action) \"\(parameters)\"") +
+        "\ngoto \(goto.stateNumber)";
     }
 
 }
