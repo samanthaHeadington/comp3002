@@ -248,7 +248,7 @@ public final class FSMBuilder : Translator {
     func walkLook (_ tree : VirtualTree) -> Any {
         var return_val = walkTree((tree as! Tree).child(0)) as! FiniteStateMachine;
 
-        return_val.states[0].transitions[0].attributes.isRead = false;
+        return_val.override(["look"]);
 
         return return_val;
     }

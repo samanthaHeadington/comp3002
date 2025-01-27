@@ -157,7 +157,8 @@ public class Transition : CustomStringConvertible{
         return ((action == "") ? 
             "    \(name) \"\(attributes)\""
         :
-            "    \(action) \"\(parameters)\"") +
+            "    \(action) \"\(parameters)\" \n" +
+            "    isRootBuilding: \(isRootBuilding)") +
         "\ngoto \(goto.stateNumber)";
     }
 
