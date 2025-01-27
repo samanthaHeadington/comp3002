@@ -808,7 +808,7 @@ public final class Parser: Transducer {
         let children = treeStack[range].compactMap{ $0 } // discard nils
         self.newTree = Tree(label: rootLabel, children: children)
     }
-        
+    
     func buildTreeFromIndex(_ index: Int) {
         //Index is positive 1,2,3,... => label is in the tree relative to the left end; i.e., to the right of left end.
         //Index is negative -1,-2,-3,... => label is in the tree relative to the right end; i.e., to the left of right end.
