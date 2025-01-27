@@ -17,7 +17,7 @@ testGrammar.type = "parser";
 
 print(Grammar.defaultsFor("#A"));
 
-// part 2
+// part 2 //
 
 print(FSMBuilder.example1(parserFSM: parserInput, scannerFSMs: scannerInput));
 
