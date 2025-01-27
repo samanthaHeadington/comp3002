@@ -107,7 +107,7 @@ public final class FSMBuilder : Translator {
                 print(text);
                 builder.process (text)
                 text = scannerFSMs;
-                builder.process (text)
+                //builder.process (text)
             } catch {
                 print ("File not found")
             }

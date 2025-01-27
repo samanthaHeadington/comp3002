@@ -44,6 +44,36 @@ public class FiniteStateMachine : CustomStringConvertible {
        }
     }
 
+    static func empty() -> FiniteStateMachine{
+        var return_val = FiniteStateMachine();
+        
+        return_val.states.append(FiniteStateMachineState());
+        return_val.states[0].isInitial = true;
+        return_val.states[1].isFinal = true;
+
+        return return_val;
+    }
+
+    // static func ||(lhs : inout FiniteStateMachine, rhs : FiniteStateMachine) -> FiniteStateMachine{
+    //     for state in rhs.states{
+    //         lhs.states.append(state);
+    //     }
+
+    //     lhs.renumber();
+
+    //     return lhs;
+    // }
+
+    // static func orAll(fsm_list: [FiniteStateMachine]){
+    //     for i in 1..<fsm_list.count{
+    //         (fsm_list[0]) || (fsm_list[i]);
+    //     }
+    // }
+
+    func concatenate(_ fsm: FiniteStateMachine){
+
+    }
+
     static func forAction(_ action : String, parameters : Array<Any>, isRootBuilding : Bool) -> FiniteStateMachine{
         var transition = Transition(action: action, parameters: parameters, isRootBuilding : isRootBuilding);
 
@@ -75,17 +105,24 @@ public class FiniteStateMachine : CustomStringConvertible {
     static func fromTransition(_ transition : Transition) -> FiniteStateMachine{
         var return_val = FiniteStateMachine();
 
-        return_val.states.append(FiniteStateMachineState());
-        return_val.states.append(FiniteStateMachineState());
+        return_val.addState(FiniteStateMachineState());
+        return_val.addState(FiniteStateMachineState());
 
         return_val.renumber();
 
-        return_val.states[0].transitions.append(transition);
+        return_val.states[0].isInitial = true;
+        return_val.states[1].isFinal = true;
+
+        return_val.states[0].addTransition(transition);
         transition.goto = return_val.states[1];
 
         return_val.override(Grammar.defaultsFor(transition.name));
 
         return return_val;
+    }
+
+    func addState(_ state: FiniteStateMachineState){
+        states.append(state);
     }
 
     public var description: String {
@@ -112,9 +149,13 @@ public class FiniteStateMachineState : CustomStringConvertible {
 
     public var description : String {
         return "State \(stateNumber)" +
-            ((isInitial) ? "initial; " : "") +
-            ((isFinal) ? "final;" : "") +
+            ((isInitial) ? " initial; " : "") +
+            ((isFinal) ? " final;" : "") +
             "\n\(transitions.map {return String(describing: $0)}.joined(separator: "\n"))";
+    }
+
+    func addTransition(_ transition: Transition){
+        transitions.append(transition);
     }
 }
 
