@@ -64,7 +64,7 @@ public class FiniteStateMachine : CustomStringConvertible {
     //     return lhs;
     // }
 
-    // static func orAll(fsm_list: [FiniteStateMachine]){
+    // static func orAll(fsm_list: inout [FiniteStateMachine]){
     //     for i in 1..<fsm_list.count{
     //         (fsm_list[0]) || (fsm_list[i]);
     //     }
@@ -122,7 +122,7 @@ public class FiniteStateMachine : CustomStringConvertible {
     }
 
     func addState(_ state: FiniteStateMachineState){
-        states.append(state);
+        states.appendIfAbsent(state);
     }
 
     public var description: String {
@@ -130,7 +130,7 @@ public class FiniteStateMachine : CustomStringConvertible {
     }
 }
 
-public class FiniteStateMachineState : CustomStringConvertible {
+public class FiniteStateMachineState : CustomStringConvertible, Equatable {
     var stateNumber: Int = 0
     var isInitial: Bool = false
     var isFinal: Bool = false
@@ -138,6 +138,13 @@ public class FiniteStateMachineState : CustomStringConvertible {
     
     init(){
         transitions = [];
+    }
+
+    public static func ==(lhs: FiniteStateMachineState, rhs: FiniteStateMachineState) -> Bool{
+        return (lhs.stateNumber == rhs.stateNumber) &&
+                (lhs.isInitial == rhs.isInitial) &&
+                (lhs.isFinal == rhs.isFinal) &&
+                (lhs.transitions.setEqual(equatable_arr: rhs.transitions))
     }
 
     init(state: FiniteStateMachineState){
@@ -155,11 +162,11 @@ public class FiniteStateMachineState : CustomStringConvertible {
     }
 
     func addTransition(_ transition: Transition){
-        transitions.append(transition);
+        transitions.appendIfAbsent(transition);
     }
 }
 
-public class Transition : CustomStringConvertible{
+public class Transition : CustomStringConvertible, Equatable{
     var name: String = ""
     var attributes: AttributeList = AttributeList ().set (["look", "noStack", "noKeep", "noNode"])
     var action: String = ""
@@ -203,9 +210,17 @@ public class Transition : CustomStringConvertible{
         "\ngoto \(goto.stateNumber)";
     }
 
+    public static func ==(lhs: Transition, rhs: Transition) -> Bool{
+        return lhs.name == rhs.name &&
+                lhs.action == rhs.action &&
+                lhs.goto == rhs.goto &&
+                lhs.parameters === rhs.parameters &&
+                lhs.attributes == rhs.attributes;
+    }
+
 }
 //
-public class AttributeList : CustomStringConvertible{
+public class AttributeList : CustomStringConvertible, Equatable{
     var isRead: Bool = false
     var isStack: Bool = false
     var isKeep: Bool = false
@@ -251,5 +266,12 @@ public class AttributeList : CustomStringConvertible{
 
     public func override (_ attributes: Array<String>) {
 	    set (attributes)
+    }
+
+    public static func ==(lhs: AttributeList, rhs: AttributeList) -> Bool{
+        return lhs.isRead == rhs.isRead &&
+                lhs.isStack == rhs.isStack &&
+                lhs.isKeep == rhs.isKeep &&
+                lhs.isNode == rhs.isNode;
     }
 }
