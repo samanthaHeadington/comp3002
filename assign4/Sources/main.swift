@@ -5,20 +5,20 @@ let scannerInput: String = try String(contentsOf: URL(fileURLWithPath: "Sources/
 
 // part 1
 
-let testGrammar : Grammar = Grammar();
+// let testGrammar : Grammar = Grammar();
 
-testGrammar.addNonterminal("#A");
+// testGrammar.addNonterminal("#A");
 
-Grammar.activeGrammar = testGrammar;
+// Grammar.activeGrammar = testGrammar;
 
-print(Grammar.defaultsFor("#A"));
+// print(Grammar.defaultsFor("#A"));
 
-testGrammar.type = "parser";
+// testGrammar.type = "parser";
 
-print(Grammar.defaultsFor("#A"));
+// print(Grammar.defaultsFor("#A"));
 
 // part 2 //
 
 print(FSMBuilder.example1(parserFSM: parserInput, scannerFSMs: scannerInput));
 
-Relation<Int, String>.example4();
+// Relation<Int, String>.example4();

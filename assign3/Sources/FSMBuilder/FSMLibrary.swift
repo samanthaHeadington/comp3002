@@ -110,6 +110,8 @@ public class FiniteStateMachine : CustomStringConvertible {
 
         return_val.renumber();
 
+        print(return_val)
+
         return_val.states[0].isInitial = true;
         return_val.states[1].isFinal = true;
 
@@ -122,7 +124,7 @@ public class FiniteStateMachine : CustomStringConvertible {
     }
 
     func addState(_ state: FiniteStateMachineState){
-        states.appendIfAbsent(state);
+        states.appendIfIdenticalAbsent(state);
     }
 
     public var description: String {
@@ -214,7 +216,7 @@ public class Transition : CustomStringConvertible, Equatable{
         return lhs.name == rhs.name &&
                 lhs.action == rhs.action &&
                 lhs.goto == rhs.goto &&
-                lhs.parameters === rhs.parameters &&
+                //lhs.parameters === rhs.parameters &&
                 lhs.attributes == rhs.attributes;
     }
 
