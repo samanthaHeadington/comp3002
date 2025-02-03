@@ -97,9 +97,6 @@ public class FiniteStateMachine: CustomStringConvertible {
         let lhs_recognizes_e = lhs.canRecognizeE()
         let rhs_recognizes_e = rhs.canRecognizeE()
 
-        // lhs.states.printWithNewLines()
-        // print("debug rhs \(rhs)")
-
         for rhs_i_state in rhs.states where rhs_i_state.isInitial {
             for lhs_f_state in lhs.states where lhs_f_state.isFinal {
                 lhs_f_state.addTransitions(rhs_i_state.transitions)
@@ -118,15 +115,9 @@ public class FiniteStateMachine: CustomStringConvertible {
             }
         }
 
-        // lhs.states.printWithNewLines()
-        // rhs.states.printWithNewLines()
-
         rhs.states.do {
-            // print("debug rhs state: \($0)")
             lhs.addState($0)
         }
-
-        // print("debug \(lhs)");
 
         lhs.reduce()
 
@@ -209,20 +200,9 @@ public class FiniteStateMachine: CustomStringConvertible {
         _ lhs: FiniteStateMachine, _ rhs: FiniteStateMachine,
         _ isFinal: (DualFiniteStateMachineState) -> Bool
     ) -> FiniteStateMachine {
-        // print(lhs)
-        // print(rhs)
-        print("\n\n\n")
-
-        var return_val = FiniteStateMachine();
 
         var initial_state = DualFiniteStateMachineState()
         initial_state.isInitial = true
-
-        var dual_states: Set<DualFiniteStateMachineState> = Set<DualFiniteStateMachineState>([
-            initial_state
-        ])
-
-        return_val.addState(initial_state)
 
         for state in lhs.states where state.isInitial {
             initial_state.left.insert(state)
@@ -231,43 +211,39 @@ public class FiniteStateMachine: CustomStringConvertible {
             initial_state.right.insert(state)
         }
 
+        var state_queue: [DualFiniteStateMachineState] = [initial_state]
         var i: Int = 0
-        while i < return_val.states.count && i < 20{
-            return_val.states[i].isFinal = isFinal(return_val.states[i] as! DualFiniteStateMachineState);
 
-            // print("\n\((return_val.states[i] as! DualFiniteStateMachineState).dual_description)\n")
+        while i < state_queue.count && i < 20 {
+            state_queue[i].isFinal = isFinal(state_queue[i])
 
-            Array((return_val.states[i] as! DualFiniteStateMachineState).getLabels()).do {
-                return_val.states[i].addTransition(Transition(label: $0))
-            }
+            var existing_val: DualFiniteStateMachineState?
 
-            return_val.states[i].transitions.do {
-                // print("\n\($0)\n")
-
-                var successor: DualFiniteStateMachineState = (return_val.states[i] as! DualFiniteStateMachineState).getSuccessor($0.label)
-
-                //if the successor is equal to an existing dual state, replace it with the existing version
-                if dual_states.contains(successor) {
-                    successor = dual_states[dual_states.firstIndex(of: successor)!]
-                } else {
-                    dual_states.insert(successor)
-                    return_val.states.append(successor)
+            for (key, value) in state_queue[i].getSuccessors() {
+                existing_val = state_queue.firstSatisfying {
+                    DualFiniteStateMachineState.equal(lhs: value, rhs: $0)
                 }
-
-                $0.goto = successor
+                if existing_val != nil {
+                    state_queue[i].addTransition(
+                        Transition(
+                            label: key, goto: existing_val!))
+                } else {
+                    state_queue[i].addTransition(Transition(label: key, goto: value))
+                    state_queue.append(value)
+                }
             }
 
-            i += 1;
+            i += 1
         }
 
-        return_val.reduce();
+        var return_val = FiniteStateMachine(states: state_queue)
 
-        print(return_val);
+        return_val.reduce()
 
         return return_val
     }
 
-    static func forAction(_ action: String, parameters: [Any], isRootBuilding: Bool)
+    static func forAction(_ action: String, parameters: [AnyHashable], isRootBuilding: Bool)
         -> FiniteStateMachine
     {
         var transition = Transition(
@@ -304,9 +280,7 @@ public class FiniteStateMachine: CustomStringConvertible {
     }
 
     static func forCharacter(_ character: String) -> FiniteStateMachine {
-        var name = character
-        name.insert(contentsOf: "$", at: name.startIndex)
-        return fromTransition(Transition(name: name))
+        return fromTransition(Transition(name: String(Character(character).asciiValue!)))
     }
 
     static func forInteger(_ integer: String) -> FiniteStateMachine {
@@ -317,6 +291,9 @@ public class FiniteStateMachine: CustomStringConvertible {
         var return_val = fromTransition(transitions[0])
 
         return_val.states[0].addTransitions(Array(transitions[1..<transitions.count]))
+        return_val.states[0].transitionsDo {
+            $0.goto = return_val.states[1]
+        }
 
         return return_val
     }
@@ -409,10 +386,7 @@ public class FiniteStateMachineState: CustomStringConvertible, Hashable {
     }
 
     public func hash(into hasher: inout Hasher) {
-        hasher.combine(stateNumber)
-        hasher.combine(isInitial)
-        hasher.combine(isFinal)
-        hasher.combine(transitions.count)
+        hasher.combine(ObjectIdentifier(self))
     }
 }
 
@@ -434,37 +408,59 @@ public class DualFiniteStateMachineState: FiniteStateMachineState {
         return right.contains { $0.isFinal }
     }
 
-    public func getLabels() -> Set<Label> {
-        var return_val = Set<Label>()
-
-        for state in left.union(right) {
-            state.transitions.do {
-                return_val.insert($0.label)
-            }
-        }
-
-        return return_val
-    }
-
-    public func getSuccessor(_ label: Label) -> DualFiniteStateMachineState {
-        var return_val = DualFiniteStateMachineState()
+    public func getSuccessors() -> [Label: DualFiniteStateMachineState] {
+        var return_val = [Label: DualFiniteStateMachineState]()
+        var left_successors = [Label: [FiniteStateMachineState]]()
+        var right_successors = [Label: [FiniteStateMachineState]]()
 
         for state in left {
-            Array(state.getSuccessor(label)).do {
-                return_val.left.insert($0)
+            state.transitionsDo {
+                if left_successors[$0.label] != nil {
+                    left_successors[$0.label]!.append($0.goto)
+                } else {
+                    left_successors[$0.label] = [$0.goto]
+                }
             }
         }
 
         for state in right {
-            Array(state.getSuccessor(label)).do {
-                return_val.left.insert($0)
+            state.transitionsDo {
+                if right_successors[$0.label] != nil {
+                    right_successors[$0.label]!.append($0.goto)
+                } else {
+                    right_successors[$0.label] = [$0.goto]
+                }
+            }
+        }
+
+        for (key, value) in left_successors {
+            return_val[key] = DualFiniteStateMachineState()
+            for state in value {
+                return_val[key]!.left.insert(state)
+            }
+        }
+
+        for (key, value) in right_successors {
+            if return_val[key] == nil {
+                return_val[key] = DualFiniteStateMachineState()
+            }
+            value.do {
+                return_val[key]!.right.insert($0)
             }
         }
 
         return return_val
     }
 
-    public static func == (lhs: DualFiniteStateMachineState, rhs: DualFiniteStateMachineState)
+    public override func hash(into hasher: inout Hasher) {
+        for state in left {
+            hasher.combine(state)
+        }
+        hasher.combine(left.count)
+        hasher.combine(right.count)
+    }
+
+    public static func equal(lhs: DualFiniteStateMachineState, rhs: DualFiniteStateMachineState)
         -> Bool
     {
         return lhs.left == rhs.left && lhs.right == rhs.right
@@ -484,7 +480,7 @@ public class Transition: CustomStringConvertible, Hashable {
         label = Label(name: name)
     }
 
-    init(action: String, parameters: [Any], isRootBuilding: Bool) {
+    init(action: String, parameters: [AnyHashable], isRootBuilding: Bool) {
         label = Label(action: action, parameters: parameters, isRootBuilding: isRootBuilding)
     }
 
@@ -495,6 +491,11 @@ public class Transition: CustomStringConvertible, Hashable {
     init(label: Label) {
         self.label = label
         goto = FiniteStateMachineState()  // temp endpoint
+    }
+
+    init(label: Label, goto: FiniteStateMachineState) {
+        self.label = label
+        self.goto = goto
     }
 
     func setAttributes(_ attributes: AttributeList) {
@@ -522,7 +523,6 @@ public class Transition: CustomStringConvertible, Hashable {
         setAttributes(attributes)
     }
 
-
     public var description: String {
         return "\(label)\ngoto \(goto.stateNumber)"
     }
@@ -533,6 +533,7 @@ public class Transition: CustomStringConvertible, Hashable {
 
     public func hash(into hasher: inout Hasher) {
         hasher.combine(label)
+        hasher.combine(ObjectIdentifier(goto))
     }
 
 }
@@ -541,7 +542,7 @@ public class Label: Hashable, CustomStringConvertible {
     var name: String = ""
     var attributes: AttributeList = AttributeList()
     var action: String = ""
-    var parameters: [Any] = []
+    var parameters: [AnyHashable] = []
     var isRootBuilding: Bool = false
 
     init(name: String) {
@@ -549,7 +550,7 @@ public class Label: Hashable, CustomStringConvertible {
         attributes = AttributeList(attributes: Grammar.defaultsFor(name))
     }
 
-    init(action: String, parameters: [Any], isRootBuilding: Bool) {
+    init(action: String, parameters: [AnyHashable], isRootBuilding: Bool) {
         self.action = action
         self.isRootBuilding = isRootBuilding
         self.parameters = parameters
@@ -563,7 +564,7 @@ public class Label: Hashable, CustomStringConvertible {
         hasher.combine(name)
         hasher.combine(action)
         hasher.combine(attributes)
-        hasher.combine(parameters.count)
+        hasher.combine(parameters)
         hasher.combine(isRootBuilding)
     }
 
@@ -581,17 +582,16 @@ public class Label: Hashable, CustomStringConvertible {
         return
             ((hasAttributes())
             ? "    \(name) \"\(attributes)\""
-            : "    \(action) \"\(parameters)\" \n" + "    isRootBuilding: \(isRootBuilding)")
+            : "    \(action) \"\(parameters.map{String(describing: $0)})\" \n" + "    isRootBuilding: \(isRootBuilding)")
     }
 
     public static func == (lhs: Label, rhs: Label) -> Bool {
-        return lhs.name == rhs.name && lhs.action == rhs.action && lhs.attributes == rhs.attributes
+        return lhs.identifier() == rhs.identifier() && lhs.attributes == rhs.attributes
             && lhs.isRootBuilding == rhs.isRootBuilding
-            && lhs.parameters.count == rhs.parameters.count; // TODO : Fix parameter equality
+            && Set(lhs.parameters) == Set(rhs.parameters)
     }
 }
 
-//
 public class AttributeList: CustomStringConvertible, Hashable {
     var isRead: Bool = false
     var isStack: Bool = false
