@@ -147,10 +147,10 @@ public class FiniteStateMachine: CustomStringConvertible {
             }
         }
 
-        for state in states {
-            for i in (0..<state.transitions.count).reversed() {
-                if !is_useful_state[state.transitions[i].goto.stateNumber] {
-                    state.transitions.remove(at: i)
+        states.do{
+            for i in (0..<$0.transitions.count).reversed() {
+                if !is_useful_state[$0.transitions[i].goto.stateNumber] {
+                    $0.transitions.remove(at: i)
                 }
             }
         }
@@ -256,10 +256,6 @@ public class FiniteStateMachine: CustomStringConvertible {
         return fromTransition(Transition(name: identifer))
     }
 
-    static func forSymbol(_ symbol: String) -> FiniteStateMachine {
-        return fromTransition(Transition(name: symbol))
-    }
-
     static func forString(_ string: String) -> FiniteStateMachine {
         return (Grammar.activeGrammar!.isScanner())
             ? forStringScanner(string) : forStringParser(string)
@@ -363,7 +359,7 @@ public class FiniteStateMachineState: CustomStringConvertible, Hashable {
 
     func getAsTriples(_ arr: inout [(Int, String, Int)]) {
         for transition in transitions {
-            arr.append((stateNumber, transition.identifier(), transition.goto.stateNumber))
+            arr.append((stateNumber, transition.description, transition.goto.stateNumber))
         }
     }
 

@@ -138,6 +138,9 @@ extension Int {
     func odd() -> Bool {
         return self % 2 == 1
     }
+    func fromAscii() -> String {
+        return (self > 31 && self < 127) ? String(UnicodeScalar(self)!) : String(self)
+    }
 }
 
 extension String {

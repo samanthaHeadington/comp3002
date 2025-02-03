@@ -29,7 +29,7 @@ public final class FSMBuilder: Translator {
         resetParser()
     }
 
-    func walkTree(_ tree: VirtualTree, symbolOnly : Bool = false) -> Any {
+    func walkTree(_ tree: VirtualTree, symbolOnly: Bool = false) -> Any {
         let action = tree.label as String
         switch action {
         case "walkList":
@@ -124,7 +124,7 @@ public final class FSMBuilder: Translator {
                 print(text)
                 builder.process(text)
                 text = scannerFSMs
-                builder.process(text)
+                //builder.process(text)
             } catch {
                 print("File not found")
             }
@@ -173,14 +173,14 @@ public final class FSMBuilder: Translator {
         return 0
     }
     //
-    func walkIdentifier(_ tree: VirtualTree, identifierOnly : Bool = false) -> Any {
+    func walkIdentifier(_ tree: VirtualTree, identifierOnly: Bool = false) -> Any {
 
         var return_val: FiniteStateMachine
 
         let symbol: String = (tree as! Token).symbol
 
-        if identifierOnly{
-            return symbol;
+        if identifierOnly {
+            return symbol
         }
 
         if fsmMap[symbol] != nil {
@@ -202,7 +202,7 @@ public final class FSMBuilder: Translator {
         return FiniteStateMachine.forString((tree as! Token).symbol)
     }
     func walkSymbol(_ tree: VirtualTree) -> Any {
-        return FiniteStateMachine.forSymbol((tree as! Token).symbol)
+        return walkString(tree)
     }
     func walkInteger(_ tree: VirtualTree) -> Any {
         return FiniteStateMachine.forInteger(((tree as! Token).symbol))
@@ -282,9 +282,9 @@ public final class FSMBuilder: Translator {
         //return_val.states[0].addSemanticAction(action : walkTree(tree.child(0)) as! String, parameters: []);
 
         var parameters: [AnyHashable] = []
-        for i in 1..<tree.children.count {
+        tree.children.doWithoutFirst {
             parameters.append(
-                walkTree(tree.child(i), symbolOnly: true) as! AnyHashable)
+                walkTree($0, symbolOnly: true) as! AnyHashable)
         }
 
         var action = (walkTree(tree.child(0)) as! FiniteStateMachine).states[0].transitions[0]
