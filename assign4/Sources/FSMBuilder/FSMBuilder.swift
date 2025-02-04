@@ -188,7 +188,7 @@ public final class FSMBuilder: Translator {
         if fsmMap[symbol] != nil {
             return_val = FiniteStateMachine(fsm: fsmMap[symbol]!)
         } else {
-            return_val = FiniteStateMachine.forIdentifier(symbol)
+            return_val = FiniteStateMachine.forString(symbol)
         }
 
         return return_val
@@ -197,14 +197,14 @@ public final class FSMBuilder: Translator {
         return FiniteStateMachine.empty()
     }
     func walkCharacter(_ tree: VirtualTree) -> Any {
-        return FiniteStateMachine.forCharacter((tree as! Token).symbol)
+        return FiniteStateMachine.forCharacter(Character((tree as! Token).symbol))
     }
     func walkString(_ tree: VirtualTree, getString: Bool = false) -> Any {
         if getString { return (tree as! Token).symbol }
         return FiniteStateMachine.forString((tree as! Token).symbol)
     }
     func walkSymbol(_ tree: VirtualTree) -> Any {
-        return FiniteStateMachine.forSymbol((tree as! Token).symbol)
+        return FiniteStateMachine.forString((tree as! Token).symbol)
     }
     func walkInteger(_ tree: VirtualTree) -> Any {
         return FiniteStateMachine.forInteger(((tree as! Token).symbol))
