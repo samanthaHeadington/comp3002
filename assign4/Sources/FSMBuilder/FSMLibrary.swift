@@ -266,10 +266,10 @@ public class FiniteStateMachine: CustomStringConvertible {
     }
 
     private static func forStringParser(_ string: String) -> FiniteStateMachine {
-        var return_val = fromTransition(Transition(name: Array(string[0]).asciiValue!))
+        var return_val = fromTransition(Transition(name: Array(string)[0].asciiValue!))
 
-        for i in 1..<string.count {
-            return_val = return_val .. fromTransition(Transition(name: string[i]))
+        Array(string).doWithoutFirst {
+            return_val = return_val .. fromTransition(Transition(name: $0.asciiValue!))
         }
 
         return return_val
