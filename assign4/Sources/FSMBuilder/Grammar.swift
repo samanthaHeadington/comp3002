@@ -8,9 +8,9 @@
 import Foundation
     
 public final class Grammar {
-    var type: Int;
-    var nonterminals: Array <Int>
-    var macros: Dictionary <Int,Any>
+    var type: String;
+    var nonterminals: Array <String>
+    var macros: Dictionary <String,Any>
     
     init () {
         type = "scanner"
@@ -18,15 +18,15 @@ public final class Grammar {
         macros = [:]
     }
     //finiteStateMachine:
-    func addMacro (_ macro: Int, _ fsm: Any) -> Void {
+    func addMacro (_ macro: String, _ fsm: Any) -> Void {
         macros [macro] = fsm
     }
     
-    func addNonterminal (_ name: Int) -> Void {
+    func addNonterminal (_ name: String) -> Void {
         nonterminals.append (name)
     }
     
-    func isNonterminal (_ symbol: Int) -> Bool {
+    func isNonterminal (_ symbol: String) -> Bool {
         return nonterminals.contains (symbol)
     }
     
@@ -40,7 +40,7 @@ public final class Grammar {
     
     nonisolated(unsafe) static var activeGrammar: Grammar?
     
-    static func lookDefaults () -> [Int] {
+    static func lookDefaults () -> [String] {
         return ["look"]
     }
     
@@ -56,7 +56,7 @@ public final class Grammar {
         return AttributeList ().set (["read", "noKeep", "stack", "node"])
     }
     
-    static func defaultsFor (_ name: Int) -> AttributeList {
+    static func defaultsFor (_ name: String) -> AttributeList {
         let grammar = activeGrammar
         if (grammar == nil) {return scannerDefaults()}
         if (grammar!.isScanner()) {return scannerDefaults ()}

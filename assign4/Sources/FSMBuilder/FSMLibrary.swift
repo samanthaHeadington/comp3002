@@ -252,7 +252,7 @@ public class FiniteStateMachine: CustomStringConvertible {
         return fromTransition(transition)
     }
 
-    static func forIdentifier(_ identifer: String) -> FiniteStateMachine {
+    static func forIdentifier(_ identifer: UInt8) -> FiniteStateMachine {
         return fromTransition(Transition(name: identifer))
     }
 
@@ -262,11 +262,11 @@ public class FiniteStateMachine: CustomStringConvertible {
     }
 
     private static func forStringScanner(_ string: String) -> FiniteStateMachine {
-        return fromTransitions(string.map { Transition(name: $0) } as! [Transition])
+        return fromTransitions(string.map { Transition(name: $0.asciiValue!) } as! [Transition])
     }
 
     private static func forStringParser(_ string: String) -> FiniteStateMachine {
-        var return_val = fromTransition(Transition(name: string[0]))
+        var return_val = fromTransition(Transition(name: Array(string[0]).asciiValue!))
 
         for i in 1..<string.count {
             return_val = return_val .. fromTransition(Transition(name: string[i]))
@@ -275,12 +275,12 @@ public class FiniteStateMachine: CustomStringConvertible {
         return return_val
     }
 
-    static func forCharacter(_ character: String) -> FiniteStateMachine {
-        return fromTransition(Transition(name: String(Character(character).asciiValue!)))
+    static func forCharacter(_ character: Character) -> FiniteStateMachine {
+        return fromTransition(Transition(name: (character).asciiValue!))
     }
 
-    static func forInteger(_ integer: String) -> FiniteStateMachine {
-        return fromTransition(Transition(name: integer))
+    static func forInteger(_ integer: Int) -> FiniteStateMachine {
+        return fromTransition(Transition(name: UInt8(integer)))
     }
 
     static func fromTransitions(_ transitions: [Transition]) -> FiniteStateMachine {
@@ -472,7 +472,7 @@ public class Transition: CustomStringConvertible, Hashable {
     var label: Label
     var goto: FiniteStateMachineState = FiniteStateMachineState()
 
-    init(name: Int) {
+    init(name: UInt8) {
         label = Label(name: name)
     }
 
@@ -535,15 +535,15 @@ public class Transition: CustomStringConvertible, Hashable {
 }
 
 public class Label: Hashable, CustomStringConvertible {
-    var name: Int = -1;
+    var name: UInt8 = -1;
     var attributes: AttributeList = AttributeList()
     var action: String = ""
     var parameters: [AnyHashable] = []
     var isRootBuilding: Bool = false
 
-    init(name: Int) {
+    init(name: UInt8) {
         self.name = name;
-        attributes = AttributeList(attributes: Grammar.defaultsFor(String(UnicodeScalar(name)!)))
+        attributes = AttributeList(attributes: Grammar.defaultsFor(String(name)))
     }
 
     init(action: String, parameters: [AnyHashable], isRootBuilding: Bool) {
