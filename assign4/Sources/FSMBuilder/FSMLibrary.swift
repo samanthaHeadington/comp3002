@@ -472,7 +472,7 @@ public class Transition: CustomStringConvertible, Hashable {
     var label: Label
     var goto: FiniteStateMachineState = FiniteStateMachineState()
 
-    init(name: String) {
+    init(name: Int) {
         label = Label(name: name)
     }
 
@@ -502,7 +502,7 @@ public class Transition: CustomStringConvertible, Hashable {
         return label.contents()
     }
 
-    func identifier() -> String {
+    func identifier() -> Any {
         return label.identifier()
     }
 
