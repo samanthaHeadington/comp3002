@@ -535,15 +535,15 @@ public class Transition: CustomStringConvertible, Hashable {
 }
 
 public class Label: Hashable, CustomStringConvertible {
-    var name: String = ""
+    var name: Int = -1;
     var attributes: AttributeList = AttributeList()
     var action: String = ""
     var parameters: [AnyHashable] = []
     var isRootBuilding: Bool = false
 
-    init(name: String) {
-        self.name = name
-        attributes = AttributeList(attributes: Grammar.defaultsFor(name))
+    init(name: Int) {
+        self.name = name;
+        attributes = AttributeList(attributes: Grammar.defaultsFor(String(UnicodeScalar(name)!)))
     }
 
     init(action: String, parameters: [AnyHashable], isRootBuilding: Bool) {
@@ -564,13 +564,13 @@ public class Label: Hashable, CustomStringConvertible {
         hasher.combine(isRootBuilding)
     }
 
-    func hasAttributes() -> Bool { return name != "" }
+    func hasAttributes() -> Bool { return name != -1 }
     func hasAction() -> Bool { return action != "" }
 
     func contents() -> Any {
         return (hasAction()) ? parameters : attributes
     }
-    func identifier() -> String {
+    func identifier() -> Any {
         return (hasAction()) ? action : name
     }
 
@@ -582,7 +582,8 @@ public class Label: Hashable, CustomStringConvertible {
     }
 
     public static func == (lhs: Label, rhs: Label) -> Bool {
-        return lhs.identifier() == rhs.identifier() && lhs.attributes == rhs.attributes
+        return lhs.name == rhs.name && lhs.attributes == rhs.attributes
+            && rhs.action == lhs.action
             && lhs.isRootBuilding == rhs.isRootBuilding
             && Set(lhs.parameters) == Set(rhs.parameters)
     }
