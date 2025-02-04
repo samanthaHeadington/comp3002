@@ -1,7 +1,7 @@
 import Foundation
 
-let parserInput: Int = try Int(contentsOf: URL(fileURLWithPath: "Sources/FSMBuilder/parserFSMs.txt"), encoding: .utf8)
-let scannerInput: Int = try Int(contentsOf: URL(fileURLWithPath: "Sources/FSMBuilder/scannerFSMs.txt"), encoding: .utf8)
+let parserInput: String = try String(contentsOf: URL(fileURLWithPath: "Sources/FSMBuilder/parserFSMs.txt"), encoding: .utf8)
+let scannerInput: String = try String(contentsOf: URL(fileURLWithPath: "Sources/FSMBuilder/scannerFSMs.txt"), encoding: .utf8)
 
 // part 1
 

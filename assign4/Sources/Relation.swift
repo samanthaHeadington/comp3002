@@ -1,14 +1,14 @@
 class Utilities { 
- static func className(of element: Any?) -> Int { 
+ static func className(of element: Any?) -> String { 
   //Usage: Utilities.className(of element)
   if let element = element { 
-   return Int(describing: type(of: element)) 
+   return String(describing: type(of: element)) 
   } else { return "nil" } 
  } 
 }
 
 extension Int: Relatable{}
-extension Int: Relatable{}
+extension String: Relatable{}
 
 //hashable wrapper for Item, Relationship, Item tuples
 //swift doesn't allow extensions for tuples
@@ -27,17 +27,17 @@ struct HashableTuple<Item: Relatable, Relationship: Relatable>: Hashable, Custom
         return (from, relationship, to);
     }
 
-    var description: Int {
+    var description: String {
         return "(\(from.terseDescription) \(relationship.terseDescription) \(to.terseDescription))" 
     }
 }
  
 protocol Relatable: Hashable, Comparable, CustomStringConvertible {
-    var terseDescription: Int { get } 
+    var terseDescription: String { get } 
 } 
 
 extension Relatable { 
-    var terseDescription: Int { return description }
+    var terseDescription: String { return description }
 }
 
 class Relation<Item: Relatable, Relationship: Relatable> : CustomStringConvertible{
@@ -59,7 +59,7 @@ class Relation<Item: Relatable, Relationship: Relatable> : CustomStringConvertib
         //Usage: let relation3 = Relation<Int,String> (from: relation2.triples)
         self.triples = triples
     }
-    var description: Int { 
+    var description: String { 
         //Output format: Relation(from [(a1 b1 c1) (a2 b2 c2) …]).
         let triplesDescription = triples.map {
             "\($0)"} 
@@ -146,7 +146,7 @@ class Relation<Item: Relatable, Relationship: Relatable> : CustomStringConvertib
     static func example1 ()  -> Void {
         //Relation.example1 ()
         //First, build a relation.
-        var relation: Relation<Int,Int> = Relation<Int, Int>(from: [(2, "<", 3), (1, "=", 1), 
+        var relation: Relation<Int,String> = Relation<Int, String>(from: [(2, "<", 3), (1, "=", 1), 
         (3, ">", 1), (2, "<", 4), (1, "<", 5), (5, "<", 6), (2, "<", 5)]);
 
         //Second, show that the entire relation can be printed…
@@ -164,7 +164,7 @@ class Relation<Item: Relatable, Relationship: Relatable> : CustomStringConvertib
     static func example2 ()  -> Void {
         //Relation.example2()
         //First, build a relation.
-        var relation: Relation<Int,Int> = Relation<Int, Int>(from: [(2, "<", 3), (1, "=", 1), 
+        var relation: Relation<Int,String> = Relation<Int, String>(from: [(2, "<", 3), (1, "=", 1), 
         (3, ">", 1), (2, "<", 4), (1, "<", 5), (5, "<", 6), (2, "<", 5)]);
 
         //Second, print the relation…"
@@ -187,7 +187,7 @@ class Relation<Item: Relatable, Relationship: Relatable> : CustomStringConvertib
 
     //tests allFrom, allRelationships and allTo, proper set functionality and proper insertion functionality
     static func example3(){
-        var relation: Relation<Int,Int> = Relation<Int, Int>(from: [(2, "<", 3), (1, "=", 1), 
+        var relation: Relation<Int,String> = Relation<Int, String>(from: [(2, "<", 3), (1, "=", 1), 
             (3, ">", 1), (2, "<", 4), (1, "<", 5), (5, "<", 6), (2, "<", 5)]);
 
         print("Let relation = \(relation)");
@@ -195,8 +195,8 @@ class Relation<Item: Relatable, Relationship: Relatable> : CustomStringConvertib
         print("Has relationships \(relation.allRelationships())")
         print("Has relations to \(relation.allTo())");
 
-        print(#"Relation contains (2, "<", 3) is (true) "#, relation.triples.contains(HashableTuple<Int, Int>((2, "<", 3))));
-        print(#"Relation contains (2, "<", 1) is (false) "#, relation.triples.contains(HashableTuple<Int, Int>((2, "<", 1))));
+        print(#"Relation contains (2, "<", 3) is (true) "#, relation.triples.contains(HashableTuple<Int, String>((2, "<", 3))));
+        print(#"Relation contains (2, "<", 1) is (false) "#, relation.triples.contains(HashableTuple<Int, String>((2, "<", 1))));
 
         print(#"Test insert (1, "=", 1), should fail"#);
         relation.add(1, and: "=", and: 1);
@@ -214,7 +214,7 @@ class Relation<Item: Relatable, Relationship: Relatable> : CustomStringConvertib
     }
 
     static func example4(){
-        var down : Relation<Int, Int> = Relation<Int, Int>(from: [(1, "L", 3), (2, "G", 5), (5, "A", 7), (2, "X", 7)]);
+        var down : Relation<Int, String> = Relation<Int, String>(from: [(1, "L", 3), (2, "G", 5), (5, "A", 7), (2, "X", 7)]);
         print(down.performStar([1,2]));
     }
 

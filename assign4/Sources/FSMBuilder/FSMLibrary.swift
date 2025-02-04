@@ -276,11 +276,11 @@ public class FiniteStateMachine: CustomStringConvertible {
     }
 
     static func forCharacter(_ character: Character) -> FiniteStateMachine {
-        return fromTransition(Transition(name: (character).asciiValue!))
+        return fromTransition(Transition(name: UInt16((character).asciiValue!)))
     }
 
     static func forInteger(_ integer: Int) -> FiniteStateMachine {
-        return fromTransition(Transition(name: UInt8(integer)))
+        return fromTransition(Transition(name: UInt16(integer)))
     }
 
     static func fromTransitions(_ transitions: [Transition]) -> FiniteStateMachine {
@@ -472,8 +472,12 @@ public class Transition: CustomStringConvertible, Hashable {
     var label: Label
     var goto: FiniteStateMachineState = FiniteStateMachineState()
 
-    init(name: UInt8) {
+    init(name: UInt16) {
         label = Label(name: name)
+    }
+
+    init(name: UInt8){
+        label = Label(name: UInt16(name))
     }
 
     init(action: String, parameters: [AnyHashable], isRootBuilding: Bool) {
@@ -535,13 +539,13 @@ public class Transition: CustomStringConvertible, Hashable {
 }
 
 public class Label: Hashable, CustomStringConvertible {
-    var name: UInt8?;
+    var name: UInt16?;
     var attributes: AttributeList = AttributeList()
     var action: String = ""
     var parameters: [AnyHashable] = []
     var isRootBuilding: Bool = false
 
-    init(name: UInt8) {
+    init(name: UInt16) {
         self.name = name;
         attributes = AttributeList(attributes: Grammar.defaultsFor(String(name)))
     }
@@ -577,7 +581,7 @@ public class Label: Hashable, CustomStringConvertible {
     public var description: String {
         return
             ((hasAttributes())
-            ? "    \(name) \"\(attributes)\""
+            ? "    \(name!) \"\(attributes)\""
             : "    \(action) \"\(parameters.map{String(describing: $0)})\" \n" + "    isRootBuilding: \(isRootBuilding)")
     }
 
