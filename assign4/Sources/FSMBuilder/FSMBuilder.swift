@@ -29,7 +29,7 @@ public final class FSMBuilder: Translator {
         resetParser()
     }
 
-    func walkTree(_ tree: VirtualTree, symbolOnly : Bool = false) -> Any {
+    func walkTree(_ tree: VirtualTree, symbolOnly: Bool = false) -> Any {
         let action = tree.label as String
         switch action {
         case "walkList":
@@ -175,14 +175,14 @@ public final class FSMBuilder: Translator {
         return 0
     }
     //
-    func walkIdentifier(_ tree: VirtualTree, identifierOnly : Bool = false) -> Any {
+    func walkIdentifier(_ tree: VirtualTree, identifierOnly: Bool = false) -> Any {
 
         var return_val: FiniteStateMachine
 
         let symbol: String = (tree as! Token).symbol
 
-        if identifierOnly{
-            return symbol;
+        if identifierOnly {
+            return symbol
         }
 
         if fsmMap[symbol] != nil {
@@ -207,7 +207,7 @@ public final class FSMBuilder: Translator {
         return FiniteStateMachine.forString((tree as! Token).symbol)
     }
     func walkInteger(_ tree: VirtualTree) -> Any {
-        return FiniteStateMachine.forInteger(((tree as! Token).symbol))
+        return FiniteStateMachine.forInteger(Int((tree as! Token).symbol)!)
     }
     func walkAttributes(_ tree: VirtualTree) -> Any {
         let t = tree as! Tree
@@ -239,8 +239,8 @@ public final class FSMBuilder: Translator {
         return return_val
     }
 
-    func walkDotDot(_ tree: VirtualTree){
-        
+    func walkDotDot(_ tree: VirtualTree) {
+
     }
 
     func walkBuildTreeOrTokenFromName(_ tree: VirtualTree) -> Any {
@@ -293,8 +293,7 @@ public final class FSMBuilder: Translator {
                 walkTree(tree.child(i), symbolOnly: true) as! AnyHashable)
         }
 
-        var action = (walkTree(tree.child(0)) as! FiniteStateMachine).states[0].transitions[0]
-            .identifier()
+        var action = walkTree(tree.child(0), symbolOnly: true) as! String
 
         return FiniteStateMachine.forAction(
             action, parameters: parameters, isRootBuilding: treeBuilding)
