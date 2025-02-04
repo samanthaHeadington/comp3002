@@ -535,7 +535,7 @@ public class Transition: CustomStringConvertible, Hashable {
 }
 
 public class Label: Hashable, CustomStringConvertible {
-    var name: UInt8 = -1;
+    var name: UInt8?;
     var attributes: AttributeList = AttributeList()
     var action: String = ""
     var parameters: [AnyHashable] = []
@@ -564,7 +564,7 @@ public class Label: Hashable, CustomStringConvertible {
         hasher.combine(isRootBuilding)
     }
 
-    func hasAttributes() -> Bool { return name != -1 }
+    func hasAttributes() -> Bool { return name != nil }
     func hasAction() -> Bool { return action != "" }
 
     func contents() -> Any {
