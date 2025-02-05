@@ -575,14 +575,20 @@ public class Label: Hashable, CustomStringConvertible {
         return (hasAction()) ? parameters : attributes
     }
     func identifier() -> Any {
-        return (hasAction()) ? action : name
+        if hasAttributes() {
+            return (name! > 31 && name! < 127) // valid ascii range
+            ? Character(UnicodeScalar(name!)!)
+            : name!
+        }else {
+            return action
+        }
     }
 
     public var description: String {
-        return
+        return "    \(identifier()) "
             ((hasAttributes())
-            ? "    \(name!) \"\(attributes)\""
-            : "    \(action) \"\(parameters.map{String(describing: $0)})\" \n" + "    isRootBuilding: \(isRootBuilding)")
+            ? "\"\(attributes)\""
+            : "\"\(parameters.map{String(describing: $0)})\" \n" + "    isRootBuilding: \(isRootBuilding)")
     }
 
     public static func == (lhs: Label, rhs: Label) -> Bool {

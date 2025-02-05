@@ -38,10 +38,8 @@ public final class FSMBuilder: Translator {
             return walkIdentifier(tree, identifierOnly: symbolOnly)
         case "walkCharacter":
             return walkCharacter(tree)
-        case "walkString":
+        case "walkString", "walkSymbol":
             return walkString(tree, getString: symbolOnly)
-        case "walkSymbol":
-            return walkSymbol(tree)
         case "walkInteger":
             return walkInteger(tree)
         case "walkEpsilon":
@@ -204,7 +202,7 @@ public final class FSMBuilder: Translator {
         return FiniteStateMachine.forString((tree as! Token).symbol)
     }
     func walkSymbol(_ tree: VirtualTree) -> Any {
-        return FiniteStateMachine.forString((tree as! Token).symbol)
+        return walkString(tree)
     }
     func walkInteger(_ tree: VirtualTree) -> Any {
         return FiniteStateMachine.forInteger(Int((tree as! Token).symbol)!)
@@ -288,9 +286,9 @@ public final class FSMBuilder: Translator {
         //return_val.states[0].addSemanticAction(action : walkTree(tree.child(0)) as! String, parameters: []);
 
         var parameters: [AnyHashable] = []
-        for i in 1..<tree.children.count {
+        tree.children.doWithoutFirst {
             parameters.append(
-                walkTree(tree.child(i), symbolOnly: true) as! AnyHashable)
+                walkTree($0, symbolOnly: true) as! AnyHashable)
         }
 
         var action = walkTree(tree.child(0), symbolOnly: true) as! String
