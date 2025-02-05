@@ -213,7 +213,7 @@ public final class FSMBuilder: Translator {
         return walkString(tree)
     }
     func walkInteger(_ tree: VirtualTree) -> Any {
-        if symbolOnly { return (tree as! Token).symbol }
+        if symbolOnly { return Int((tree as! Token).symbol)! }
         return FiniteStateMachine.forInteger(Int((tree as! Token).symbol)!)
     }
     func walkAttributes(_ tree: VirtualTree) -> Any {

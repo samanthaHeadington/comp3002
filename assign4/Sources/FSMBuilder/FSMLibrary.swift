@@ -283,6 +283,14 @@ public class FiniteStateMachine: CustomStringConvertible {
         return fromTransition(Transition(name: UInt16(integer)))
     }
 
+    static func forDotDot(_ start: Int, _ end: Int) -> FiniteStateMachine{
+        var dotdot_string = "";
+        for i in start...end{
+            dotdot_string.append(Character(UnicodeScalar(i)!))
+        }
+        return forString(dotdot_string);
+    }
+
     static func fromTransitions(_ transitions: [Transition]) -> FiniteStateMachine {
         var return_val = fromTransition(transitions[0])
 
