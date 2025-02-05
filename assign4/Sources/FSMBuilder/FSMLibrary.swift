@@ -577,7 +577,7 @@ public class Label: Hashable, CustomStringConvertible {
     func identifier() -> Any {
         if hasAttributes() {
             return (name! > 32 && name! < 127)  // printable ascii range
-                ? Character(UnicodeScalar(name!)!)
+                ? "$" + String(Character(UnicodeScalar(name!)!))
                 : name!
         } else {
             return action

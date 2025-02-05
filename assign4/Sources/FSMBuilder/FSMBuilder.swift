@@ -13,16 +13,16 @@ public final class FSMBuilder: Translator {
     var parser: Parser?
     var tree: VirtualTree? = nil
     var fsmMap: [String: FiniteStateMachine] = [:]  //Ultimately FSM
-    var symbolOnly: Bool = false // when symbolOnly is true, the builder stops constructing FSMs and starts returning token symbols instead
+    var symbolOnly: Bool = false  // when symbolOnly is true, the builder stops constructing FSMs and starts returning token symbols instead
 
     init() {
         resetParser()
     }
 
-    func inSymbolOnlyMode(operation: ()->Void){
-        symbolOnly = true;
-        operation();
-        symbolOnly = false;
+    func inSymbolOnlyMode(operation: () -> Void) {
+        symbolOnly = true
+        operation()
+        symbolOnly = false
     }
 
     func resetParser() {
@@ -179,7 +179,7 @@ public final class FSMBuilder: Translator {
 
         return 0
     }
-    //
+
     func walkIdentifier(_ tree: VirtualTree) -> Any {
 
         var return_val: FiniteStateMachine
@@ -202,7 +202,8 @@ public final class FSMBuilder: Translator {
         return FiniteStateMachine.empty()
     }
     func walkCharacter(_ tree: VirtualTree) -> Any {
-        return FiniteStateMachine.forCharacter(Character((tree as! Token).symbol))
+        if symbolOnly { return Int(Character((tree as! Token).symbol).asciiValue!) }
+        return FiniteStateMachine.forInteger(Int(Character((tree as! Token).symbol).asciiValue!))
     }
     func walkString(_ tree: VirtualTree) -> Any {
         if symbolOnly { return (tree as! Token).symbol }
@@ -212,6 +213,7 @@ public final class FSMBuilder: Translator {
         return walkString(tree)
     }
     func walkInteger(_ tree: VirtualTree) -> Any {
+        if symbolOnly { return (tree as! Token).symbol }
         return FiniteStateMachine.forInteger(Int((tree as! Token).symbol)!)
     }
     func walkAttributes(_ tree: VirtualTree) -> Any {
@@ -244,12 +246,14 @@ public final class FSMBuilder: Translator {
         return return_val
     }
 
-    func walkDotDot(_ tree: VirtualTree) -> Any{
-        var return_val = FiniteStateMachine();
+    func walkDotDot(_ tree: VirtualTree) -> Any {
+        var return_val = FiniteStateMachine()
         inSymbolOnlyMode {
-            return_val = FiniteStateMachine.forDotDot((tree as! Token).symbol)
+            return_val = FiniteStateMachine.forDotDot(
+                walkTree((tree as! Tree).child(0)) as! Int,
+                walkTree((tree as! Tree).child(1)) as! Int)
         }
-        return return_val;
+        return return_val
     }
 
     func walkBuildTreeOrTokenFromName(_ tree: VirtualTree) -> Any {
@@ -292,8 +296,8 @@ public final class FSMBuilder: Translator {
     }
     func walkSemanticAction(_ tree: Tree, treeBuilding: Bool) -> FiniteStateMachine {
         var parameters: [AnyHashable] = []
-        var action = "";
-        symbolOnly = true; // enter symbol only mode
+        var action = ""
+        symbolOnly = true  // enter symbol only mode
 
         inSymbolOnlyMode {
             tree.children.doWithoutFirst {
@@ -303,7 +307,7 @@ public final class FSMBuilder: Translator {
 
             action = walkTree(tree.child(0)) as! String
         }
- 
+
         return FiniteStateMachine.forAction(
             action, parameters: parameters, isRootBuilding: treeBuilding)
     }
