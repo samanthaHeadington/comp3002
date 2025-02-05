@@ -38,10 +38,8 @@ public final class FSMBuilder: Translator {
             return walkIdentifier(tree, identifierOnly: symbolOnly)
         case "walkCharacter":
             return walkCharacter(tree)
-        case "walkString":
+        case "walkString", "walkSymbol":
             return walkString(tree, getString: symbolOnly)
-        case "walkSymbol":
-            return walkSymbol(tree)
         case "walkInteger":
             return walkInteger(tree)
         case "walkEpsilon":
@@ -50,6 +48,8 @@ public final class FSMBuilder: Translator {
             return walkPostfix(tree, ^)
         case "walkPlus":
             return walkPostfix(tree, +)
+        case "walkDotDot":
+            return walkDotDot(tree)
         case "walkStar":
             return walkPostfix(tree, *)
         case "walkOr":
@@ -124,7 +124,7 @@ public final class FSMBuilder: Translator {
                 print(text)
                 builder.process(text)
                 text = scannerFSMs
-                //builder.process(text)
+                builder.process(text)
             } catch {
                 print("File not found")
             }
@@ -186,7 +186,7 @@ public final class FSMBuilder: Translator {
         if fsmMap[symbol] != nil {
             return_val = FiniteStateMachine(fsm: fsmMap[symbol]!)
         } else {
-            return_val = FiniteStateMachine.forIdentifier(symbol)
+            return_val = FiniteStateMachine.forString(symbol)
         }
 
         return return_val
@@ -195,7 +195,7 @@ public final class FSMBuilder: Translator {
         return FiniteStateMachine.empty()
     }
     func walkCharacter(_ tree: VirtualTree) -> Any {
-        return FiniteStateMachine.forCharacter((tree as! Token).symbol)
+        return FiniteStateMachine.forCharacter(Character((tree as! Token).symbol))
     }
     func walkString(_ tree: VirtualTree, getString: Bool = false) -> Any {
         if getString { return (tree as! Token).symbol }
@@ -205,7 +205,7 @@ public final class FSMBuilder: Translator {
         return walkString(tree)
     }
     func walkInteger(_ tree: VirtualTree) -> Any {
-        return FiniteStateMachine.forInteger(((tree as! Token).symbol))
+        return FiniteStateMachine.forInteger(Int((tree as! Token).symbol)!)
     }
     func walkAttributes(_ tree: VirtualTree) -> Any {
         let t = tree as! Tree
@@ -235,6 +235,10 @@ public final class FSMBuilder: Translator {
             return_val = infix(return_val, (walkTree($0) as! FiniteStateMachine))
         }
         return return_val
+    }
+
+    func walkDotDot(_ tree: VirtualTree) {
+
     }
 
     func walkBuildTreeOrTokenFromName(_ tree: VirtualTree) -> Any {
@@ -287,8 +291,7 @@ public final class FSMBuilder: Translator {
                 walkTree($0, symbolOnly: true) as! AnyHashable)
         }
 
-        var action = (walkTree(tree.child(0)) as! FiniteStateMachine).states[0].transitions[0]
-            .identifier()
+        var action = walkTree(tree.child(0), symbolOnly: true) as! String
 
         return FiniteStateMachine.forAction(
             action, parameters: parameters, isRootBuilding: treeBuilding)

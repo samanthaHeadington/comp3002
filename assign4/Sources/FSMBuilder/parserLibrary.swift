@@ -51,12 +51,12 @@ public class Tree: VirtualTree {
         (self.label, self .children) = (label, children)
     }
 
-    func addChild(aTree: VirtualTree) {
-        children.append(aTree)
-    }
-
     func child(_ index: Int) -> VirtualTree{
         return children[index];
+    }
+
+    func addChild(aTree: VirtualTree) {
+        children.append(aTree)
     }
 
     public var description: String {

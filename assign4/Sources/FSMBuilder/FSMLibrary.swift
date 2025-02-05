@@ -252,7 +252,7 @@ public class FiniteStateMachine: CustomStringConvertible {
         return fromTransition(transition)
     }
 
-    static func forIdentifier(_ identifer: String) -> FiniteStateMachine {
+    static func forIdentifier(_ identifer: UInt8) -> FiniteStateMachine {
         return fromTransition(Transition(name: identifer))
     }
 
@@ -262,25 +262,25 @@ public class FiniteStateMachine: CustomStringConvertible {
     }
 
     private static func forStringScanner(_ string: String) -> FiniteStateMachine {
-        return fromTransitions(string.map { Transition(name: $0) } as! [Transition])
+        return fromTransitions(string.map { Transition(name: $0.asciiValue!) } as! [Transition])
     }
 
     private static func forStringParser(_ string: String) -> FiniteStateMachine {
-        var return_val = fromTransition(Transition(name: string[0]))
+        var return_val = fromTransition(Transition(name: Array(string)[0].asciiValue!))
 
-        for i in 1..<string.count {
-            return_val = return_val .. fromTransition(Transition(name: string[i]))
+        Array(string).doWithoutFirst {
+            return_val = return_val .. fromTransition(Transition(name: $0.asciiValue!))
         }
 
         return return_val
     }
 
-    static func forCharacter(_ character: String) -> FiniteStateMachine {
-        return fromTransition(Transition(name: String(Character(character).asciiValue!)))
+    static func forCharacter(_ character: Character) -> FiniteStateMachine {
+        return fromTransition(Transition(name: UInt16((character).asciiValue!)))
     }
 
-    static func forInteger(_ integer: String) -> FiniteStateMachine {
-        return fromTransition(Transition(name: integer))
+    static func forInteger(_ integer: Int) -> FiniteStateMachine {
+        return fromTransition(Transition(name: UInt16(integer)))
     }
 
     static func fromTransitions(_ transitions: [Transition]) -> FiniteStateMachine {
@@ -472,8 +472,12 @@ public class Transition: CustomStringConvertible, Hashable {
     var label: Label
     var goto: FiniteStateMachineState = FiniteStateMachineState()
 
-    init(name: String) {
+    init(name: UInt16) {
         label = Label(name: name)
+    }
+
+    init(name: UInt8){
+        label = Label(name: UInt16(name))
     }
 
     init(action: String, parameters: [AnyHashable], isRootBuilding: Bool) {
@@ -502,7 +506,7 @@ public class Transition: CustomStringConvertible, Hashable {
         return label.contents()
     }
 
-    func identifier() -> String {
+    func identifier() -> Any {
         return label.identifier()
     }
 
@@ -535,15 +539,15 @@ public class Transition: CustomStringConvertible, Hashable {
 }
 
 public class Label: Hashable, CustomStringConvertible {
-    var name: String = ""
+    var name: UInt16?;
     var attributes: AttributeList = AttributeList()
     var action: String = ""
     var parameters: [AnyHashable] = []
     var isRootBuilding: Bool = false
 
-    init(name: String) {
-        self.name = name
-        attributes = AttributeList(attributes: Grammar.defaultsFor(name))
+    init(name: UInt16) {
+        self.name = name;
+        attributes = AttributeList(attributes: Grammar.defaultsFor(String(name)))
     }
 
     init(action: String, parameters: [AnyHashable], isRootBuilding: Bool) {
@@ -564,25 +568,32 @@ public class Label: Hashable, CustomStringConvertible {
         hasher.combine(isRootBuilding)
     }
 
-    func hasAttributes() -> Bool { return name != "" }
+    func hasAttributes() -> Bool { return name != nil }
     func hasAction() -> Bool { return action != "" }
 
     func contents() -> Any {
         return (hasAction()) ? parameters : attributes
     }
-    func identifier() -> String {
-        return (hasAction()) ? action : name
+    func identifier() -> Any {
+        if hasAttributes() {
+            return (name! > 32 && name! < 127) // printable ascii range
+            ? Character(UnicodeScalar(name!)!)
+            : name!
+        }else {
+            return action
+        }
     }
 
     public var description: String {
-        return
+        return "    \(identifier()) " + 
             ((hasAttributes())
-            ? "    \(name) \"\(attributes)\""
-            : "    \(action) \"\(parameters.map{String(describing: $0)})\" \n" + "    isRootBuilding: \(isRootBuilding)")
+            ? "\"\(attributes)\""
+            : "\"\(parameters.map{String(describing: $0)})\" \n" + "    isRootBuilding: \(isRootBuilding)")
     }
 
     public static func == (lhs: Label, rhs: Label) -> Bool {
-        return lhs.identifier() == rhs.identifier() && lhs.attributes == rhs.attributes
+        return lhs.name == rhs.name && lhs.attributes == rhs.attributes
+            && rhs.action == lhs.action
             && lhs.isRootBuilding == rhs.isRootBuilding
             && Set(lhs.parameters) == Set(rhs.parameters)
     }
