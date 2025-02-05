@@ -285,15 +285,11 @@ public final class FSMBuilder: Translator {
 
         //return_val.states[0].addSemanticAction(action : walkTree(tree.child(0)) as! String, parameters: []);
 
-        print(tree);
-
         var parameters: [AnyHashable] = []
         tree.children.doWithoutFirst {
-            print($0)
             parameters.append(
                 walkTree($0, symbolOnly: true) as! AnyHashable)
         }
-        print(parameters)
 
         var action = walkTree(tree.child(0), symbolOnly: true) as! String
 
