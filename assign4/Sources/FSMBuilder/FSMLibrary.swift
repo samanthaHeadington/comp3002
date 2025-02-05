@@ -576,7 +576,7 @@ public class Label: Hashable, CustomStringConvertible {
     }
     func identifier() -> Any {
         if hasAttributes() {
-            return (name! > 31 && name! < 127) // valid ascii range
+            return (name! > 32 && name! < 127) // printable ascii range
             ? Character(UnicodeScalar(name!)!)
             : name!
         }else {
@@ -585,7 +585,7 @@ public class Label: Hashable, CustomStringConvertible {
     }
 
     public var description: String {
-        return "    \(identifier()) "
+        return "    \(identifier()) " + 
             ((hasAttributes())
             ? "\"\(attributes)\""
             : "\"\(parameters.map{String(describing: $0)})\" \n" + "    isRootBuilding: \(isRootBuilding)")
