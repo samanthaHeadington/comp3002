@@ -13,9 +13,16 @@ public final class FSMBuilder: Translator {
     var parser: Parser?
     var tree: VirtualTree? = nil
     var fsmMap: [String: FiniteStateMachine] = [:]  //Ultimately FSM
+    var symbolOnly: Bool = false // when symbolOnly is true, the builder stops constructing FSMs and starts returning token symbols instead
 
     init() {
         resetParser()
+    }
+
+    func inSymbolOnlyMode(operation: ()->Void){
+        symbolOnly = true;
+        operation();
+        symbolOnly = false;
     }
 
     func resetParser() {
@@ -29,17 +36,17 @@ public final class FSMBuilder: Translator {
         resetParser()
     }
 
-    func walkTree(_ tree: VirtualTree, symbolOnly: Bool = false) -> Any {
+    func walkTree(_ tree: VirtualTree) -> Any {
         let action = tree.label as String
         switch action {
         case "walkList":
             return walkList(tree)
         case "walkIdentifier":
-            return walkIdentifier(tree, identifierOnly: symbolOnly)
+            return walkIdentifier(tree)
         case "walkCharacter":
             return walkCharacter(tree)
         case "walkString", "walkSymbol":
-            return walkString(tree, getString: symbolOnly)
+            return walkString(tree)
         case "walkInteger":
             return walkInteger(tree)
         case "walkEpsilon":
@@ -173,13 +180,13 @@ public final class FSMBuilder: Translator {
         return 0
     }
     //
-    func walkIdentifier(_ tree: VirtualTree, identifierOnly: Bool = false) -> Any {
+    func walkIdentifier(_ tree: VirtualTree) -> Any {
 
         var return_val: FiniteStateMachine
 
         let symbol: String = (tree as! Token).symbol
 
-        if identifierOnly {
+        if symbolOnly {
             return symbol
         }
 
@@ -197,8 +204,8 @@ public final class FSMBuilder: Translator {
     func walkCharacter(_ tree: VirtualTree) -> Any {
         return FiniteStateMachine.forCharacter(Character((tree as! Token).symbol))
     }
-    func walkString(_ tree: VirtualTree, getString: Bool = false) -> Any {
-        if getString { return (tree as! Token).symbol }
+    func walkString(_ tree: VirtualTree) -> Any {
+        if symbolOnly { return (tree as! Token).symbol }
         return FiniteStateMachine.forString((tree as! Token).symbol)
     }
     func walkSymbol(_ tree: VirtualTree) -> Any {
@@ -237,8 +244,12 @@ public final class FSMBuilder: Translator {
         return return_val
     }
 
-    func walkDotDot(_ tree: VirtualTree) {
-
+    func walkDotDot(_ tree: VirtualTree) -> Any{
+        var return_val = FiniteStateMachine();
+        inSymbolOnlyMode {
+            return_val = FiniteStateMachine.forDotDot((tree as! Token).symbol)
+        }
+        return return_val;
     }
 
     func walkBuildTreeOrTokenFromName(_ tree: VirtualTree) -> Any {
@@ -256,9 +267,9 @@ public final class FSMBuilder: Translator {
     func walkBuildTreeFromRightIndex(_ tree: VirtualTree) -> Any {
         var semantic_tree = constructSemanticTree(tree, action: "buildTreeFromIndex")
 
-        for i in 1..<semantic_tree.children.count {
-            (semantic_tree.child(i) as! Token).symbol.insert(
-                contentsOf: "-", at: (semantic_tree.child(i) as! Token).label.startIndex)
+        semantic_tree.children.doWithoutFirst {
+            ($0 as! Token).symbol.insert(
+                contentsOf: "-", at: ($0 as! Token).label.startIndex)
         }
 
         return walkSemanticAction(semantic_tree, treeBuilding: true)
@@ -280,19 +291,19 @@ public final class FSMBuilder: Translator {
         return walkSemanticAction((tree as! Tree).child(0) as! Tree, treeBuilding: false)
     }
     func walkSemanticAction(_ tree: Tree, treeBuilding: Bool) -> FiniteStateMachine {
-
-        //return_val.addState(FiniteStateMachineState());
-
-        //return_val.states[0].addSemanticAction(action : walkTree(tree.child(0)) as! String, parameters: []);
-
         var parameters: [AnyHashable] = []
-        tree.children.doWithoutFirst {
-            parameters.append(
-                walkTree($0, symbolOnly: true) as! AnyHashable)
+        var action = "";
+        symbolOnly = true; // enter symbol only mode
+
+        inSymbolOnlyMode {
+            tree.children.doWithoutFirst {
+                parameters.append(
+                    walkTree($0) as! AnyHashable)
+            }
+
+            action = walkTree(tree.child(0)) as! String
         }
-
-        var action = walkTree(tree.child(0), symbolOnly: true) as! String
-
+ 
         return FiniteStateMachine.forAction(
             action, parameters: parameters, isRootBuilding: treeBuilding)
     }

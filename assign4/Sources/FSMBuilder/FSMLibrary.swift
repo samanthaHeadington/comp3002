@@ -147,7 +147,7 @@ public class FiniteStateMachine: CustomStringConvertible {
             }
         }
 
-        states.do{
+        states.do {
             for i in (0..<$0.transitions.count).reversed() {
                 if !is_useful_state[$0.transitions[i].goto.stateNumber] {
                     $0.transitions.remove(at: i)
@@ -476,7 +476,7 @@ public class Transition: CustomStringConvertible, Hashable {
         label = Label(name: name)
     }
 
-    init(name: UInt8){
+    init(name: UInt8) {
         label = Label(name: UInt16(name))
     }
 
@@ -539,14 +539,14 @@ public class Transition: CustomStringConvertible, Hashable {
 }
 
 public class Label: Hashable, CustomStringConvertible {
-    var name: UInt16?;
+    var name: UInt16?
     var attributes: AttributeList = AttributeList()
     var action: String = ""
     var parameters: [AnyHashable] = []
     var isRootBuilding: Bool = false
 
     init(name: UInt16) {
-        self.name = name;
+        self.name = name
         attributes = AttributeList(attributes: Grammar.defaultsFor(String(name)))
     }
 
@@ -576,19 +576,20 @@ public class Label: Hashable, CustomStringConvertible {
     }
     func identifier() -> Any {
         if hasAttributes() {
-            return (name! > 32 && name! < 127) // printable ascii range
-            ? Character(UnicodeScalar(name!)!)
-            : name!
-        }else {
+            return (name! > 32 && name! < 127)  // printable ascii range
+                ? Character(UnicodeScalar(name!)!)
+                : name!
+        } else {
             return action
         }
     }
 
     public var description: String {
-        return "    \(identifier()) " + 
-            ((hasAttributes())
-            ? "\"\(attributes)\""
-            : "\"\(parameters.map{String(describing: $0)})\" \n" + "    isRootBuilding: \(isRootBuilding)")
+        return "    \(identifier()) "
+            + ((hasAttributes())
+                ? "\"\(attributes)\""
+                : "\"\(parameters.map{String(describing: $0)})\" \n"
+                    + "    isRootBuilding: \(isRootBuilding)")
     }
 
     public static func == (lhs: Label, rhs: Label) -> Bool {
