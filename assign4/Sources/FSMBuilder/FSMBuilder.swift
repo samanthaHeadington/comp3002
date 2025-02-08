@@ -30,7 +30,6 @@ public final class FSMBuilder: Translator {
     }
 
     func process(_ text: String) {
-        processTypeNow(text.components(separatedBy: " "))
         tree = parser!.parse(text)
         walkTree(tree!)
         resetParser()
@@ -143,15 +142,12 @@ public final class FSMBuilder: Translator {
     func processTypeNow(_ parameters: [Any]) {
         //The child will be a walkString with "scanner" or "parser"
         let type = parameters[0] as? String
-        print(parameters[0])
         if type != nil {
             Grammar.activeGrammar!.type = type!.trimmingCharacters(in: .whitespacesAndNewlines)
         }
     }
 
     func walkList(_ tree: VirtualTree) -> Any {
-        print(Grammar.activeGrammar!.type)
-
         let treeList = (tree as? Tree)!
         var index = 0
         print("\(tree)")
