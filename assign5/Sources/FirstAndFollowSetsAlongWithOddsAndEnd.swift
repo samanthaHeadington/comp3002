@@ -55,7 +55,7 @@ class Production: CustomStringConvertible {
 
 //For the following, just add the code you are missing...
 
-class Grammar {
+class Grammar : CustomStringConvertible{
     var type: String = ""
     var nonterminals: [String] = []
     var macros: [String: FiniteStateMachine] = [:]
@@ -143,6 +143,14 @@ class Grammar {
             i += 1
         }
         return result
+    }
+
+    public var description: String{
+        return "\(type)\n" +
+                "\(nonterminals)\n" +
+                "\(macros)\n" +
+                "\(productions)\n" +
+                "\(keywords)"
     }
 
     func computeEGeneratingNonterminals() {

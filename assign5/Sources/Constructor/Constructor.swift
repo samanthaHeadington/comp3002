@@ -73,8 +73,8 @@ public final class Constructor: Translator {
             return walkGrammar(tree)
         case "walkProduction":
             return walkProduction(tree)
-        // case "walkTreeOrTokenFromName":
-        // return walkTreeOr
+        case "walkLeftPartWithLookahead":
+            return walkLeftPartWithLookahead(tree)
         case "walkBuildTreeOrTokenFromName":
             return walkBuildTreeOrTokenFromName(tree)
         case "walkBuildTreeFromLeftIndex":
@@ -132,6 +132,7 @@ public final class Constructor: Translator {
         } else {
             do {
                 builder.process(grammar_text)
+                print(grammar)
             } catch {
                 print("File not found")
             }
