@@ -173,7 +173,7 @@ public final class Constructor: Translator {
         return 0
     }
 
-    func walkGrammar(_ tree: VirtualTree) -> Any {
+    func walkGrammar(_ tree: VirtualTree) {
         firstPassWalkTree(tree)
 
         (tree as! Tree).children.do {
