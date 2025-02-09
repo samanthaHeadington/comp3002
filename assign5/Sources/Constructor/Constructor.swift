@@ -69,6 +69,10 @@ public final class Constructor: Translator {
             return walkInfix(tree, &)
         case "walkAttributes":
             return walkAttributes(tree)
+        case "walkGrammar":
+            return walkGrammar(tree)
+        case "walkProduction":
+            return walkProduction(tree)
         // case "walkTreeOrTokenFromName":
         // return walkTreeOr
         case "walkBuildTreeOrTokenFromName":
@@ -184,11 +188,32 @@ public final class Constructor: Translator {
     func firstPassWalkTree(_ tree: VirtualTree) {
         if ["walkLeftPart", "walkLeftPartWithLookahead"].contains(tree.label) {
             Grammar.activeGrammar!.nonterminals.append(((tree as! Tree).child(0) as! Token).symbol)
-        } else {
+        } else if ["walkGrammar", "walkProduction"].contains(tree.label) {
             (tree as! Tree).children.do {
                 firstPassWalkTree($0)
             }
         }
+    }
+
+    func walkProduction(_ tree: VirtualTree) {
+        let new_production: Production = walkTree((tree as! Tree).child(0)) as! Production
+
+        new_production.fsm = walkTree((tree as! Tree).child(1)) as! FiniteStateMachine
+
+        Grammar.activeGrammar!.addProduction(new_production.leftPart, new_production)
+    }
+
+    func walkLeftPartWithLookahead(_ tree: VirtualTree) -> Any {
+        let return_val = Production()
+
+        inSymbolOnlyMode {
+            return_val.leftPart = walkTree((tree as! Tree).child(0)) as! String
+        }
+
+        return_val.lookahead = (walkTree((tree as! Tree).child(1)) as! FiniteStateMachine)
+            .transitionNames()
+
+        return return_val
     }
 
     func walkIdentifier(_ tree: VirtualTree) -> Any {

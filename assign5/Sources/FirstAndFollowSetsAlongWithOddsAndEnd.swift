@@ -24,7 +24,7 @@ extension Array where Element: Equatable {
 
 class Production: CustomStringConvertible {
     var leftPart: String = ""
-    var lookahead: [String]? = []
+    var lookahead: [String]?
     var fsm: FiniteStateMachine = FiniteStateMachine()
     var generatesE: Bool = false
     var firstSet: [String] = []
@@ -73,6 +73,7 @@ class Grammar {
     func isScanner() -> Bool { return type == "scanner" }
     func isParser() -> Bool { return type == "grammar" }
     func addMacro(_ str: String, _ fsm: FiniteStateMachine) { macros[str] = fsm }
+    func addProduction(_ str: String, _ production: Production) { productions[str] = production }
 
     static func scannerDefaults() -> AttributeList {
         return AttributeList().set(["read", "keep", "noStack", "noNode"])
