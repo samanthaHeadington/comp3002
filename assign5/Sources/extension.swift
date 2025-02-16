@@ -17,12 +17,13 @@ extension Array {
         }
         return nil
     }
-    func printWithNewLines() {
-        print("[")
+    func descriptionWithNewLines() -> String{
+        var return_val = "["
         for elt in self {
-            print("\(elt),")
+            return_val.append("\(elt),\n")
         }
-        print("]")
+        return_val.append("]")
+        return return_val
     }
     func partitionUsing<Key: Hashable>(separator: ((Element) -> Key)) -> [Key: [Element]] {
         var result: [Key: [Element]] = [:]

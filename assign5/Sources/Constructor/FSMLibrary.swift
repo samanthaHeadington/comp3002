@@ -49,8 +49,8 @@ public class FiniteStateMachine: CustomStringConvertible {
         }
     }
 
-    func initialStates() -> [FiniteStateMachineState]{
-        return states.filter{$0.isInitial}
+    func initialStates() -> [FiniteStateMachineState] {
+        return states.filter { $0.isInitial }
     }
 
     func renumber() {
@@ -162,11 +162,11 @@ public class FiniteStateMachine: CustomStringConvertible {
         renumber()
     }
 
-    func transitionNames() -> [String]{
-        var return_val : [String] = [];
-        states.do{
-            $0.transitions.do{ transition in
-                return_val.append(transition.identifier());
+    func transitionNames() -> [String] {
+        var return_val: [String] = []
+        states.do {
+            $0.transitions.do { transition in
+                return_val.append(transition.identifier())
             }
         }
 
@@ -267,10 +267,6 @@ public class FiniteStateMachine: CustomStringConvertible {
         return fromTransition(transition)
     }
 
-    static func forIdentifier(_ identifer: UInt8) -> FiniteStateMachine {
-        return fromTransition(Transition(name: identifer))
-    }
-
     static func forString(_ string: String) -> FiniteStateMachine {
         return (Grammar.activeGrammar!.isScanner())
             ? forStringScanner(string) : forStringParser(string)
@@ -298,12 +294,12 @@ public class FiniteStateMachine: CustomStringConvertible {
         return fromTransition(Transition(name: UInt16(integer)))
     }
 
-    static func forDotDot(_ start: Int, _ end: Int) -> FiniteStateMachine{
-        var dotdot_string = "";
-        for i in start...end{
+    static func forDotDot(_ start: Int, _ end: Int) -> FiniteStateMachine {
+        var dotdot_string = ""
+        for i in start...end {
             dotdot_string.append(Character(UnicodeScalar(i)!))
         }
-        return forString(dotdot_string);
+        return forString(dotdot_string)
     }
 
     static func fromTransitions(_ transitions: [Transition]) -> FiniteStateMachine {
@@ -334,8 +330,8 @@ public class FiniteStateMachine: CustomStringConvertible {
         return return_val
     }
 
-    func transitionsDo(_ operation : (Transition) -> Void){
-        states.do{$0.transitions.do(operation)}
+    func transitionsDo(_ operation: (Transition) -> Void) {
+        states.do { $0.transitions.do(operation) }
     }
 
     func addState(_ state: FiniteStateMachineState) {
@@ -604,6 +600,16 @@ public class Label: Hashable, CustomStringConvertible {
     func identifier() -> String {
         if hasAttributes() {
             return (name! > 32 && name! < 127)  // printable ascii range
+                ? String(Character(UnicodeScalar(name!)!))
+                : String(name!)
+        } else {
+            return action
+        }
+    }
+
+    func identifierWith$() -> String {
+        if hasAttributes() {
+            return (name! > 32 && name! < 127)  // printable ascii range
                 ? "$" + String(Character(UnicodeScalar(name!)!))
                 : String(name!)
         } else {
@@ -612,7 +618,7 @@ public class Label: Hashable, CustomStringConvertible {
     }
 
     public var description: String {
-        return "    \(identifier()) "
+        return "    \(identifierWith$()) "
             + ((hasAttributes())
                 ? "\"\(attributes)\""
                 : "\"\(parameters.map{String(describing: $0)})\" \n"

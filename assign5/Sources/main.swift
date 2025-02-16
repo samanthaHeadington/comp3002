@@ -1,7 +1,12 @@
 import Foundation
 
 let input: String = try String(
-    contentsOf: URL(fileURLWithPath: "Sources/Grammars/toyLispGrammar.txt"), encoding: .utf8)
+    contentsOf: URL(fileURLWithPath: "Sources/Grammars/toyParserGrammarWithMacros.txt"),
+    encoding: .utf8)
+
+let input_first_follow: String = try String(
+    contentsOf: URL(fileURLWithPath: "Sources/Grammars/toyParserGrammarToTestFollowSets.txt"),
+    encoding: .utf8)
 
 // part 1
 
@@ -20,5 +25,7 @@ let input: String = try String(
 // part 2 //
 
 print(Constructor.example1(grammar_text: input))
+
+Constructor.exampleWithFirstFollow(grammar_text: input_first_follow)
 
 // Relation<Int, String>.example4();

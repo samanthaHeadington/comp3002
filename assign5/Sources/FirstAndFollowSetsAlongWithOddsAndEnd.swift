@@ -229,6 +229,8 @@ class Grammar : CustomStringConvertible{
                         let Bproduction = self.productionFor(B)
                         let q = transition.goto
 
+                        print(Bproduction.leftPart);
+
                         for r in self.eSuccessors([q]) {
                             for rTransition in r.transitions {
                                 if self.isReadTerminalTransition(rTransition) {
@@ -265,20 +267,20 @@ class Grammar : CustomStringConvertible{
         print("")
         for nonterminal in nonterminals.sorted(by: <) {
             print(
-                "//e-Generating(/(nonterminal)) = \((self.productionFor (nonterminal)).generatesE)")
+                "//e-Generating(\(nonterminal)) = \((self.productionFor (nonterminal)).generatesE)")
         }
 
         print("")
         for nonterminal in nonterminals.sorted(by: <) {
             print(
-                "//First(/(nonterminal) = \((self.productionFor (nonterminal)).followSet.sorted (by: <))"
+                "//First(\(nonterminal) = \((self.productionFor (nonterminal)).firstSet.sorted (by: <))"
             )
         }
 
         print("")
         for nonterminal in nonterminals.sorted(by: <) {
             print(
-                "//Follow(/(nonterminal) = \((self.productionFor (nonterminal)).firstSet.sorted (by: <))"
+                "//Follow(\(nonterminal) = \((self.productionFor (nonterminal)).followSet.sorted (by: <))"
             )
         }
     }

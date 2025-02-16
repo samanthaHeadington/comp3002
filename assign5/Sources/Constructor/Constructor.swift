@@ -71,10 +71,14 @@ public final class Constructor: Translator {
             return walkAttributes(tree)
         case "walkGrammar":
             return walkGrammar(tree)
+        case "walkMacro":
+            return walkMacro(tree)
         case "walkProduction":
             return walkProduction(tree)
         case "walkLeftPartWithLookahead":
             return walkLeftPartWithLookahead(tree)
+        case "walkLeftPart":
+            return walkLeftPart(tree)
         case "walkBuildTreeOrTokenFromName":
             return walkBuildTreeOrTokenFromName(tree)
         case "walkBuildTreeFromLeftIndex":
@@ -104,6 +108,21 @@ public final class Constructor: Translator {
         }
     }
 
+    static public func exampleWithFirstFollow(grammar_text: String){
+        let grammar = Grammar()
+        Grammar.activeGrammar = grammar
+
+        let builder: Constructor = Constructor()
+
+        do {
+            builder.process(grammar_text)
+            print(grammar)
+            grammar.finalize()
+        } catch {
+            print("File not found")
+        }
+    }
+
     static public func example1(grammar_text: String) -> String {  //Returns a string to please ContentView
         let grammar = Grammar()
         Grammar.activeGrammar = grammar
@@ -118,7 +137,7 @@ public final class Constructor: Translator {
         //but you'll have to replace internal uses of character $" by \". I've done it below
         //with a subset of the file...
 
-        let builder = Constructor()
+        let builder: Constructor = Constructor()
         let givenUp = false
         if givenUp {
             //The following is a subset of the scannerFSMs.txt file.
@@ -196,6 +215,14 @@ public final class Constructor: Translator {
         }
     }
 
+    func walkMacro(_ tree: VirtualTree){
+        var label: String = "";
+        inSymbolOnlyMode {
+            label = walkTree((tree as! Tree).child(0)) as! String
+        }
+        Grammar.activeGrammar?.addMacro(label, walkTree((tree as! Tree).child(1)) as! FiniteStateMachine)
+    }
+
     func walkProduction(_ tree: VirtualTree) {
         let new_production: Production = walkTree((tree as! Tree).child(0)) as! Production
 
@@ -205,11 +232,7 @@ public final class Constructor: Translator {
     }
 
     func walkLeftPartWithLookahead(_ tree: VirtualTree) -> Any {
-        let return_val = Production()
-
-        inSymbolOnlyMode {
-            return_val.leftPart = walkTree((tree as! Tree).child(0)) as! String
-        }
+        let return_val = walkLeftPart(tree) as! Production
 
         return_val.lookahead = (walkTree((tree as! Tree).child(1)) as! FiniteStateMachine)
             .transitionNames()
@@ -217,23 +240,34 @@ public final class Constructor: Translator {
         return return_val
     }
 
+    func walkLeftPart(_ tree: VirtualTree) -> Any {
+        let return_val = Production()
+
+        inSymbolOnlyMode {
+            return_val.leftPart = walkTree((tree as! Tree).child(0)) as! String
+        }
+
+        return return_val
+    }
+
     func walkIdentifier(_ tree: VirtualTree) -> Any {
-
-        var return_val: FiniteStateMachine
-
         let symbol: String = (tree as! Token).symbol
 
         if symbolOnly {
             return symbol
         }
 
-        if fsmMap[symbol] != nil {
-            return_val = FiniteStateMachine(fsm: fsmMap[symbol]!)
-        } else {
-            return_val = FiniteStateMachine.forString(symbol)
-        }
+        // if(symbol.capitalized == symbol){print(symbol)}
 
-        return return_val
+        // if Grammar.activeGrammar!.productions[symbol] != nil{
+        //     print(Grammar.activeGrammar!.productions[symbol]!);
+        //     return FiniteStateMachine(fsm: Grammar.activeGrammar!.productions[symbol]!.fsm)
+        // }else
+         if Grammar.activeGrammar!.macros[symbol] != nil {
+            return FiniteStateMachine(fsm: Grammar.activeGrammar!.macros[symbol]!)
+        } else {
+            return FiniteStateMachine.forString(symbol)
+        }
     }
     func walkEpsilon(_ tree: VirtualTree) -> Any {
         return FiniteStateMachine.empty()
@@ -258,8 +292,10 @@ public final class Constructor: Translator {
         var return_val: FiniteStateMachine = walkTree(t.child(0)) as! FiniteStateMachine
 
         var attributes: [String] = []
-        for i in 1..<t.children.count {
-            attributes.append((t.child(i) as! Token).symbol)
+        inSymbolOnlyMode {
+            t.children.doWithoutFirst {
+                attributes.append(($0 as! Token).symbol)
+            }
         }
 
         return_val.override(attributes)
@@ -294,35 +330,32 @@ public final class Constructor: Translator {
     }
 
     func walkBuildTreeOrTokenFromName(_ tree: VirtualTree) -> Any {
+        (tree as! Tree).children.insert(
+            Token(
+                label: "walkSymbol",
+                symbol: (Grammar.activeGrammar!.isScanner()) ? "buildToken" : "buildTree"), at: 0)
         return walkSemanticAction(
-            constructSemanticTree(
-                tree, action: (Grammar.activeGrammar!.isScanner()) ? "buildToken" : "buildTree"),
+            tree as! Tree,
             treeBuilding: true)
     }
 
     func walkBuildTreeFromLeftIndex(_ tree: VirtualTree) -> Any {
+        (tree as! Tree).children.insert(
+            Token(label: "walkSymbol", symbol: "buildTreeFromIndex"), at: 0)
         return walkSemanticAction(
-            constructSemanticTree(tree, action: "buildTreeFromIndex"), treeBuilding: true)
+            tree as! Tree, treeBuilding: true)
     }
 
     func walkBuildTreeFromRightIndex(_ tree: VirtualTree) -> Any {
-        var semantic_tree = constructSemanticTree(tree, action: "buildTreeFromIndex")
+        (tree as! Tree).children.insert(
+            Token(label: "walkSymbol", symbol: "buildTreeFromIndex"), at: 0)
 
-        semantic_tree.children.doWithoutFirst {
+        (tree as! Tree).children.doWithoutFirst {
             ($0 as! Token).symbol.insert(
                 contentsOf: "-", at: ($0 as! Token).label.startIndex)
         }
 
-        return walkSemanticAction(semantic_tree, treeBuilding: true)
-    }
-
-    func constructSemanticTree(_ tree: VirtualTree, action: String) -> Tree {
-        var semantic_tree: Tree = Tree(
-            label: "walkSemanticAction", children: (tree as! Tree).children)
-
-        semantic_tree.children.insert(Token(label: "walkSymbol", symbol: action), at: 0)
-
-        return semantic_tree
+        return walkSemanticAction(tree as! Tree, treeBuilding: true)
     }
 
     func walkTreeBuildingSemanticAction(_ tree: VirtualTree) -> Any {
@@ -334,7 +367,6 @@ public final class Constructor: Translator {
     func walkSemanticAction(_ tree: Tree, treeBuilding: Bool) -> FiniteStateMachine {
         var parameters: [AnyHashable] = []
         var action = ""
-        symbolOnly = true  // enter symbol only mode
 
         inSymbolOnlyMode {
             tree.children.doWithoutFirst {
