@@ -9,8 +9,8 @@ import Foundation
 //My code uses these routines.
 extension Array where Element: Equatable {
     mutating func addIfAbsentAdded(_ object: Element) -> Bool {
-        if self.contains(object) { return false }
-        self.append(object)
+        if contains(object) { return false }
+        append(object)
         return true
     }
     mutating func addAllIfAbsentAdded(_ collection: [Element]) -> Bool {
@@ -104,7 +104,7 @@ class Grammar: CustomStringConvertible {
 
     func isNonterminalTransition(_ transition: Transition) -> Bool {
         if transition.label.hasAction() { return false }  //Otherwise, it has attributes"
-        if self.isNonterminal(transition.label.identifier()) { return true }
+        if isNonterminal(transition.label.identifier()) { return true }
         return false
     }
 
@@ -112,7 +112,7 @@ class Grammar: CustomStringConvertible {
         if label.hasAction() { return true }
         //So it must be a name with attributes...
         let name = label.identifier()
-        if self.isNonterminal(name) { return productionFor(name).generatesE }
+        if isNonterminal(name) { return productionFor(name).generatesE }
         //So it must be a nonterminal.
         if !label.attributes.isRead { return true }  //because its a look
         //None of the 3 cases apply, so...
@@ -154,7 +154,7 @@ class Grammar: CustomStringConvertible {
             changed = false
             for (A, production) in productions {  //A is left part (for information only)
                 if !production.generatesE {
-                    for state in self.eSuccessors(production.fsm.states.filter { $0.isInitial }) {  //of A
+                    for state in eSuccessors(production.fsm.states.filter { $0.isInitial }) {  //of A
                         if state.isFinal {
                             production.generatesE = true
                             changed = true
@@ -174,16 +174,16 @@ class Grammar: CustomStringConvertible {
             for (A, production) in productions {  //A is for information only
                 for state in eSuccessors(production.fsm.initialStates()) {
                     for transition in state.transitions {
-                        if self.isReadTerminalTransition(transition) {
+                        if isReadTerminalTransition(transition) {
                             if production.firstSet.addIfAbsentAdded(transition.label.identifier()) {
                                 changed = true
                             }
                             //if (!production.firstSet.contains)
                         }
-                        if self.isNonterminalTransition(transition) {
+                        if isNonterminalTransition(transition) {
                             var M = transition.label.identifier()  //NOT for information only
                             if production.firstSet.addAllIfAbsentAdded(
-                                self.productionFor(M).firstSet)
+                                productionFor(M).firstSet)
                             {
                                 changed = true
                             }
@@ -218,38 +218,42 @@ class Grammar: CustomStringConvertible {
         while changed {
             changed = false
             for (A, production) in productions {  //A is for information only not to be confuxed with B or C
-                print()
-                print(A)
-                print()
                 production.fsm.transitionsDo { (_ transition: Transition) -> Void in
-                    print(production.followSet)
-                    if self.isNonterminalTransition(transition) {
+                    if isNonterminalTransition(transition) {
                         let B = transition.label.identifier()
-                        let Bproduction = self.productionFor(B)
+                        let Bproduction = productionFor(B)
                         let q = transition.goto
 
-                        print(q)
-                        print(eSuccessors([q]))
+                        print()
+                        print(B)
+                        print()
+                        print(Bproduction.followSet)
 
-                        for r in self.eSuccessors([q]) {
+                        for r in eSuccessors([q]) {
                             for rTransition in r.transitions {
-                                if self.isReadTerminalTransition(rTransition) {
+                                if isReadTerminalTransition(rTransition) {
                                     let a = transition.label.identifier()
-                                    if Bproduction.followSet.addIfAbsentAdded(a) { changed = true }
-                                }
-                                if self.isNonterminalTransition(rTransition) {
+                                    if Bproduction.followSet.addIfAbsentAdded(a) {
+                                        print("a: \(a)")
+                                        changed = true
+                                    }
+                                } else if isNonterminalTransition(rTransition) {
                                     let C = transition.label.identifier()
                                     if Bproduction.followSet.addAllIfAbsentAdded(
-                                        self.productionFor(C).firstSet)
+                                        productionFor(C).firstSet)
                                     {
+                                        print("C: \(C)")
+                                        print(productionFor(C).firstSet)
                                         changed = true
                                     }
                                 }
                             }
                             if r.isFinal {
                                 if Bproduction.followSet.addAllIfAbsentAdded(
-                                    self.productionFor(A).followSet)
+                                    productionFor(A).followSet)
                                 {
+                                    print("A: \(A)")
+                                    print(productionFor(A).followSet)
                                     changed = true
                                 }
                             }
@@ -267,20 +271,20 @@ class Grammar: CustomStringConvertible {
         print("")
         for nonterminal in nonterminals.sorted(by: <) {
             print(
-                "//e-Generating(\(nonterminal)) = \((self.productionFor (nonterminal)).generatesE)")
+                "//e-Generating(\(nonterminal)) = \((productionFor (nonterminal)).generatesE)")
         }
 
         print("")
         for nonterminal in nonterminals.sorted(by: <) {
             print(
-                "//First(\(nonterminal) = \((self.productionFor (nonterminal)).firstSet.sorted (by: <))"
+                "//First(\(nonterminal) = \((productionFor (nonterminal)).firstSet.sorted (by: <))"
             )
         }
 
         print("")
         for nonterminal in nonterminals.sorted(by: <) {
             print(
-                "//Follow(\(nonterminal) = \((self.productionFor (nonterminal)).followSet.sorted (by: <))"
+                "//Follow(\(nonterminal) = \((productionFor (nonterminal)).followSet.sorted (by: <))"
             )
         }
     }
@@ -301,7 +305,7 @@ class Grammar: CustomStringConvertible {
 func processAndDiscardDefaultsNow (_ tree: VirtualTree) {
     //Pick up the tree just built containing either the attributes, keywords, optimize, and output tree,
     //process it with walkTree, and remove it from the tree stack... by replacing the entry by nil..."
-    var tree: Tree = parser.treeStack.last; self.walkTree (tree)
+    var tree: Tree = parser.treeStack.last; walkTree (tree)
     parser.treeStack.removeLast; parser.treeStack.addLast: nil
 }
 
