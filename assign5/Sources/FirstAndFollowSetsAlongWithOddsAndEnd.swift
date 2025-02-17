@@ -99,7 +99,9 @@ class Grammar: CustomStringConvertible {
     }
 
     func isReadTerminalTransition(_ transition: Transition) -> Bool {
-        return !isNonterminalTransition(transition) && transition.label.attributes.isRead
+        if transition.label.hasAction() { return false }  //Otherwise, it has attributes"
+        if isNonterminal(transition.label.identifier()) { return false }
+        return transition.label.attributes.isRead
     }
 
     func isNonterminalTransition(_ transition: Transition) -> Bool {
@@ -224,26 +226,18 @@ class Grammar: CustomStringConvertible {
                         let Bproduction = productionFor(B)
                         let q = transition.goto
 
-                        print()
-                        print(B)
-                        print()
-                        print(Bproduction.followSet)
-
                         for r in eSuccessors([q]) {
                             for rTransition in r.transitions {
                                 if isReadTerminalTransition(rTransition) {
-                                    let a = transition.label.identifier()
+                                    let a = rTransition.label.identifier()
                                     if Bproduction.followSet.addIfAbsentAdded(a) {
-                                        print("a: \(a)")
                                         changed = true
                                     }
                                 } else if isNonterminalTransition(rTransition) {
-                                    let C = transition.label.identifier()
+                                    let C = rTransition.label.identifier()
                                     if Bproduction.followSet.addAllIfAbsentAdded(
                                         productionFor(C).firstSet)
                                     {
-                                        print("C: \(C)")
-                                        print(productionFor(C).firstSet)
                                         changed = true
                                     }
                                 }
@@ -252,8 +246,6 @@ class Grammar: CustomStringConvertible {
                                 if Bproduction.followSet.addAllIfAbsentAdded(
                                     productionFor(A).followSet)
                                 {
-                                    print("A: \(A)")
-                                    print(productionFor(A).followSet)
                                     changed = true
                                 }
                             }
