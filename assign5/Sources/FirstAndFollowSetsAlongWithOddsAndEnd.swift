@@ -55,7 +55,7 @@ class Production: CustomStringConvertible {
 
 //For the following, just add the code you are missing...
 
-class Grammar : CustomStringConvertible{
+class Grammar: CustomStringConvertible {
     var type: String = ""
     var nonterminals: [String] = []
     var macros: [String: FiniteStateMachine] = [:]
@@ -99,9 +99,7 @@ class Grammar : CustomStringConvertible{
     }
 
     func isReadTerminalTransition(_ transition: Transition) -> Bool {
-        if transition.label.hasAction() { return false }  //Otherwise, it has attributes"
-        if self.isNonterminal(transition.label.identifier()) { return false }
-        return transition.label.attributes.isRead
+        return !isNonterminalTransition(transition) && transition.label.attributes.isRead
     }
 
     func isNonterminalTransition(_ transition: Transition) -> Bool {
@@ -145,12 +143,9 @@ class Grammar : CustomStringConvertible{
         return result
     }
 
-    public var description: String{
-        return "\(type)\n" +
-                "\(nonterminals)\n" +
-                "\(macros)\n" +
-                "\(productions)\n" +
-                "\(keywords)"
+    public var description: String {
+        return "\(type)\n" + "\(nonterminals)\n" + "\(macros)\n" + "\(productions)\n"
+            + "\(keywords)"
     }
 
     func computeEGeneratingNonterminals() {
@@ -223,13 +218,18 @@ class Grammar : CustomStringConvertible{
         while changed {
             changed = false
             for (A, production) in productions {  //A is for information only not to be confuxed with B or C
+                print()
+                print(A)
+                print()
                 production.fsm.transitionsDo { (_ transition: Transition) -> Void in
+                    print(production.followSet)
                     if self.isNonterminalTransition(transition) {
                         let B = transition.label.identifier()
                         let Bproduction = self.productionFor(B)
                         let q = transition.goto
 
-                        print(Bproduction.leftPart);
+                        print(q)
+                        print(eSuccessors([q]))
 
                         for r in self.eSuccessors([q]) {
                             for rTransition in r.transitions {
