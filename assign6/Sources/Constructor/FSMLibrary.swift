@@ -49,9 +49,17 @@ public class FiniteStateMachine: CustomStringConvertible {
         }
     }
 
+    func initialStates() -> [FiniteStateMachineState] {
+        return states.filter { $0.isInitial }
+    }
+
     func renumber() {
+        renumberFrom(0)
+    }
+
+    func renumberFrom(_ start: Int) {
         for (index, state) in states.enumerated() {
-            state.stateNumber = index
+            state.stateNumber = index + start
         }
     }
 
@@ -158,6 +166,17 @@ public class FiniteStateMachine: CustomStringConvertible {
         renumber()
     }
 
+    func transitionNames() -> [String] {
+        var return_val: [String] = []
+        states.do {
+            $0.transitions.do { transition in
+                return_val.append(transition.identifier())
+            }
+        }
+
+        return return_val
+    }
+
     func getAsTriples() -> [(Int, String, Int)] {
         var return_val: [(Int, String, Int)] = []
 
@@ -252,10 +271,6 @@ public class FiniteStateMachine: CustomStringConvertible {
         return fromTransition(transition)
     }
 
-    static func forIdentifier(_ identifer: UInt8) -> FiniteStateMachine {
-        return fromTransition(Transition(name: identifer))
-    }
-
     static func forString(_ string: String) -> FiniteStateMachine {
         return (Grammar.activeGrammar!.isScanner())
             ? forStringScanner(string) : forStringParser(string)
@@ -283,12 +298,12 @@ public class FiniteStateMachine: CustomStringConvertible {
         return fromTransition(Transition(name: UInt16(integer)))
     }
 
-    static func forDotDot(_ start: Int, _ end: Int) -> FiniteStateMachine{
-        var dotdot_string = "";
-        for i in start...end{
+    static func forDotDot(_ start: Int, _ end: Int) -> FiniteStateMachine {
+        var dotdot_string = ""
+        for i in start...end {
             dotdot_string.append(Character(UnicodeScalar(i)!))
         }
-        return forString(dotdot_string);
+        return forString(dotdot_string)
     }
 
     static func fromTransitions(_ transitions: [Transition]) -> FiniteStateMachine {
@@ -319,6 +334,10 @@ public class FiniteStateMachine: CustomStringConvertible {
         return return_val
     }
 
+    func transitionsDo(_ operation: (Transition) -> Void) {
+        states.do { $0.transitions.do(operation) }
+    }
+
     func addState(_ state: FiniteStateMachineState) {
         states.appendIfIdenticalAbsent(state)
     }
@@ -333,6 +352,7 @@ public class FiniteStateMachineState: CustomStringConvertible, Hashable {
     var isInitial: Bool = false
     var isFinal: Bool = false
     var transitions: [Transition]
+    var leftPart: String = ""
 
     init() {
         transitions = []
@@ -350,11 +370,15 @@ public class FiniteStateMachineState: CustomStringConvertible, Hashable {
     }
 
     public var description: String {
-        return "State \(stateNumber)" + ((isInitial) ? " initial;" : "")
+        return terseDescription + ((isInitial) ? " initial;" : "")
             + ((isFinal) ? " final;" : "")
             + ((transitions.isEmpty)
                 ? ""
                 : "\n\(transitions.map {return String(describing: $0)}.joined(separator: "\n"))")
+    }
+
+    public var terseDescription: String {
+        return "State \(stateNumber)"
     }
 
     func addTransitions(_ transitions: [Transition]) {
@@ -391,6 +415,59 @@ public class FiniteStateMachineState: CustomStringConvertible, Hashable {
 
     public func hash(into hasher: inout Hasher) {
         hasher.combine(ObjectIdentifier(self))
+    }
+}
+
+public class ReadaheadState: FiniteStateMachineState {
+    var items: [FiniteStateMachineState]
+
+    public init(_ items: [FiniteStateMachineState]) {
+        self.items = items
+        super.init()
+    }
+
+    override public var terseDescription: String {
+        return "ReadaheadState \(stateNumber) \(items.map{$0.stateNumber})"
+    }
+}
+
+public class ReadbackState: FiniteStateMachineState {
+    var items: [Pair] = []
+
+    override public var terseDescription: String {
+        return "ReadaheadState \(stateNumber) \(items)"
+    }
+}
+
+public class ReduceState: FiniteStateMachineState {
+    var nonterminal: String
+
+    init(_ nonterminal: String) {
+        self.nonterminal = nonterminal
+        super.init()
+    }
+
+}
+
+public class SemanticState: FiniteStateMachineState {
+    var label: Label
+    var goto: FiniteStateMachineState
+
+    init(_ label: Label, goto: FiniteStateMachineState) {
+        self.label = label
+        self.goto = goto
+
+        super.init()
+    }
+
+    override public var terseDescription: String {
+        return "SemanticState \(label) goto \(goto.stateNumber)"
+    }
+}
+
+public class AcceptState: FiniteStateMachineState {
+    override public var terseDescription: String {
+        return "AcceptState"
     }
 }
 
@@ -514,7 +591,7 @@ public class Transition: CustomStringConvertible, Hashable {
         return label.contents()
     }
 
-    func identifier() -> Any {
+    func identifier() -> String {
         return label.identifier()
     }
 
@@ -582,18 +659,28 @@ public class Label: Hashable, CustomStringConvertible {
     func contents() -> Any {
         return (hasAction()) ? parameters : attributes
     }
-    func identifier() -> Any {
+    func identifier() -> String {
+        if hasAttributes() {
+            return (name! > 32 && name! < 127)  // printable ascii range
+                ? String(Character(UnicodeScalar(name!)!))
+                : String(name!)
+        } else {
+            return action
+        }
+    }
+
+    func identifierWith$() -> String {
         if hasAttributes() {
             return (name! > 32 && name! < 127)  // printable ascii range
                 ? "$" + String(Character(UnicodeScalar(name!)!))
-                : name!
+                : String(name!)
         } else {
             return action
         }
     }
 
     public var description: String {
-        return "    \(identifier()) "
+        return "    \(identifierWith$()) "
             + ((hasAttributes())
                 ? "\"\(attributes)\""
                 : "\"\(parameters.map{String(describing: $0)})\" \n"

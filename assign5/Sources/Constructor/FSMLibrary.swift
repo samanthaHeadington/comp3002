@@ -229,7 +229,7 @@ public class FiniteStateMachine: CustomStringConvertible {
         var state_queue: [DualFiniteStateMachineState] = [initial_state]
         var i: Int = 0
 
-        while i < state_queue.count && i < 20 {
+        while i < state_queue.count{
             state_queue[i].isFinal = isFinal(state_queue[i])
 
             var existing_val: DualFiniteStateMachineState?

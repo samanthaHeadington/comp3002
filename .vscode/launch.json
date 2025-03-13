@@ -107,6 +107,42 @@
             "name": "Release Assignment3 (assignment_spec/assign3)",
             "program": "${workspaceFolder:comp3002}/assignment_spec/assign3/.build/release/Assignment3",
             "preLaunchTask": "swift: Build Release Assignment3 (assignment_spec/assign3)"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:comp3002}/assign5",
+            "name": "Debug Assignment5 (assign5)",
+            "program": "${workspaceFolder:comp3002}/assign5/.build/debug/Assignment5",
+            "preLaunchTask": "swift: Build Debug Assignment5 (assign5)"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:comp3002}/assign5",
+            "name": "Release Assignment5 (assign5)",
+            "program": "${workspaceFolder:comp3002}/assign5/.build/release/Assignment5",
+            "preLaunchTask": "swift: Build Release Assignment5 (assign5)"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:comp3002}/assign6",
+            "name": "Debug assign6 (assign6)",
+            "program": "${workspaceFolder:comp3002}/assign6/.build/debug/assign6",
+            "preLaunchTask": "swift: Build Debug assign6 (assign6)"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:comp3002}/assign6",
+            "name": "Release assign6 (assign6)",
+            "program": "${workspaceFolder:comp3002}/assign6/.build/release/assign6",
+            "preLaunchTask": "swift: Build Release assign6 (assign6)"
         }
     ]
 }
