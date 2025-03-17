@@ -440,7 +440,7 @@ public class ReadbackState: FiniteStateMachineState {
     }
 
     override public var terseDescription: String {
-        return "Readback \(stateNumber) \(items)"
+        return "ReadaheadState \(stateNumber) \(items)"
     }
 }
 
@@ -645,14 +645,6 @@ public class Label: Relatable {
         attributes = AttributeList(attributes: Grammar.defaultsFor(String(name)))
     }
 
-    init(label: Label){
-        name = label.name
-        attributes = AttributeList(attributes: label.attributes)
-        action = label.action
-        parameters.append(contentsOf: label.parameters)
-        isRootBuilding = label.isRootBuilding
-    }
-
     init(action: String, parameters: [AnyHashable], isRootBuilding: Bool) {
         self.action = action
         self.isRootBuilding = isRootBuilding
@@ -686,12 +678,6 @@ public class Label: Relatable {
         } else {
             return action
         }
-    }
-
-    func asLook() -> Label{
-        let new_label = Label(label: self)
-        new_label.attributes.override(["look"])
-        return new_label
     }
 
     func identifierWith$() -> String {

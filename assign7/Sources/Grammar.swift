@@ -306,8 +306,6 @@ class Grammar: CustomStringConvertible {
             }
         }
 
-        renumber()
-
         computeEGeneratingNonterminals()
         computeFirstSets()
         computeFollowSets()

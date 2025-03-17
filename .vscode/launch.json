@@ -143,6 +143,24 @@
             "name": "Release assign6 (assign6)",
             "program": "${workspaceFolder:comp3002}/assign6/.build/release/assign6",
             "preLaunchTask": "swift: Build Release assign6 (assign6)"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:comp3002}/assign7",
+            "name": "Debug assign7 (assign7)",
+            "program": "${workspaceFolder:comp3002}/assign7/.build/debug/assign7",
+            "preLaunchTask": "swift: Build Debug assign7 (assign7)"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:comp3002}/assign7",
+            "name": "Release assign7 (assign7)",
+            "program": "${workspaceFolder:comp3002}/assign7/.build/release/assign7",
+            "preLaunchTask": "swift: Build Release assign7 (assign7)"
         }
     ]
 }

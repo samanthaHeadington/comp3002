@@ -248,131 +248,10 @@ public final class Constructor: Translator {
 
         buildReadaheadStates()
 
-        buildReadbackStateBridges()
+        replaceSemanticTransitions(readaheadStates)
     }
 
-    func buildReadaheadStates() {
-        readaheadStates.append(ReadaheadState(Grammar.activeGrammar!.initialStateOfGoals()))
-
-        readaheadStates.mutatingDo { raState in
-            var localDown = down.performRelationStar(raState.items)
-
-            localDown.do {
-                up.add(Pair($2, raState), and: $1, and: Pair($0, raState))
-            }
-
-            var fromItems = localDown.allTo()
-            fromItems.append(contentsOf: raState.items)
-
-            right.from(fromItems) { Mp, localRight in
-                let candidate = ReadaheadState(localRight.allTo())
-                var successor = readaheadStates.firstIndex(of: candidate)
-                if successor == nil {
-                    readaheadStates.append(candidate)
-                    successor = readaheadStates.lastIndex(of: candidate)
-                }
-                raState.addTransition(
-                    Transition(label: Mp, goto: readaheadStates[successor!]))
-                localRight.do {
-                    left.add(Pair($2, raState), and: $1, and: Pair($0, raState))
-                }
-            }
-        }
-
-        visible_left = Relation(from: left.triples.filter { $0.relationship.isVisible() })
-        invisible_left = Relation(from: left.triples.filter { !$0.relationship.isVisible() })
-    }
-
-    func buildReadbackStateBridges() {
-        readaheadStates.mutatingDo { raState in
-            let finalItems = raState.items.filter { $0.isFinal }
-            let partition = finalItems.partitionUsing { $0.leftPart }
-
-            for (key, value) in partition {
-                var newState: FiniteStateMachineState?
-
-                if Grammar.activeGrammar!.isGoal(key) {
-                    newState = AcceptState()
-                } else {
-                    newState = ReadbackState(
-                        items: finalItems.collect {
-                            Pair($0, raState)
-                        })
-
-                    readbackStates.append(newState as! ReadbackState)
-                }
-
-                Grammar.activeGrammar!.productionFor(key).followSet.do {
-                    raState.addTransition(
-                        Transition(
-                            label: Label(name: $0[0]),
-                            goto: newState!
-                        ))
-
-                    raState.transitions.last?.override(["look"])
-                }
-            }
-        }
-    }
-
-    func finishBuildingReadbackStates() {
-        readbackStates.mutatingDo { rbState in
-            let more_items = invisible_left.performStar(rbState.items)
-
-            visible_left.from(more_items) { Mp, localLeft in
-                let candidate = ReadbackState(items: localLeft.allTo())
-                var successor = readbackStates.firstIndex(of: candidate)
-                if successor == nil {
-                    readbackStates.append(candidate)
-                    successor = readbackStates.lastIndex(of: candidate)
-                }
-                rbState.addTransition(
-                    Transition(label: Label(label: Mp), goto: readbackStates[successor!]))
-            }
-
-            let lookbacks =
-                lookbackFor(more_items.filter { ($0.first() as! FiniteStateMachineState).isInitial })
-
-            for label in lookbacks {
-                let right_part_fsm = (pair.first() as! FiniteStateMachineState)
-                let new_state = ReduceState(right_part_fsm.leftPart)
-
-                reduceStates[right_part_fsm.leftPart] = new_state
-
-                Grammar.activeGrammar!.productionFor(new_state.nonterminal).firstSet.do {
-                    rbState.addTransition(Transition(label: Label(name: $0), goto: new_state))
-                }
-            }
-
-        }
-    }
-
-    func lookbackFor(_ items: [Pair]) -> Set<Label> {
-        var result = up.performOnce(items)
-
-        var i = 0
-
-        while i < result.count {
-            let pair = result[i]
-            let up_items = up.performStar([pair])
-            let left_items = left.performStar([pair])
-
-            result.appendIfAbsent(up_items.filter { result.firstIndex(of: $0) == nil })
-            result.appendIfAbsent(left_items.filter { result.firstIndex(of: $0) == nil })
-
-            i += 1
-        }
-
-        var lookbacks = Set<Label>()
-
-        visible_left.from(result) { Mp, relation in
-            lookbacks.insert(Mp.asLook())
-        }
-
-        return lookbacks
-    }
-
-    func firstPassWalkTree(_ tree: VirtualTree) {
+     func firstPassWalkTree(_ tree: VirtualTree) {
         if ["walkLeftPart", "walkLeftPartWithLookahead"].contains(tree.label) {
             Grammar.activeGrammar!.nonterminals.append(((tree as! Tree).child(0) as! Token).symbol)
         } else if ["walkGrammar", "walkProduction"].contains(tree.label) {
@@ -416,6 +295,92 @@ public final class Constructor: Translator {
         }
 
         return return_val
+    }
+
+
+    func buildReadaheadStates() {
+        readaheadStates.append(ReadaheadState(Grammar.activeGrammar!.initialStateOfGoals()))
+
+        readaheadStates.mutatingDo { raState in
+            var localDown = down.performRelationStar(raState.items)
+
+            localDown.do {
+                up.add(Pair($2, raState), and: $1, and: Pair($0, raState))
+            }
+
+            var fromItems = localDown.allTo()
+            fromItems.append(contentsOf: raState.items)
+
+            right.from(fromItems) { relationship, localRight in
+                let candidate = ReadaheadState(localRight.allTo())
+                var successor = readaheadStates.firstIndex(of: candidate)
+                if successor == nil {
+                    readaheadStates.append(candidate)
+                    successor = readaheadStates.lastIndex(of: candidate)
+                }
+                raState.addTransition(
+                    Transition(label: relationship, goto: readaheadStates[successor!]))
+                localRight.do {
+                    left.add(Pair($2, raState), and: $1, and: Pair($0, raState))
+                }
+            }
+        }
+
+        visible_left = Relation(from: left.triples.filter { $0.relationship.isVisible() })
+        invisible_left = Relation(from: left.triples.filter { !$0.relationship.isVisible() })
+    }
+
+    func buildReadbackStateBridges() {
+        readaheadStates.do { raState in
+            let finalItems = raState.items.filter { $0.isFinal }
+            let partition = finalItems.partitionUsing { $0.leftPart }
+
+            for (key, value) in partition {
+                var newState: FiniteStateMachineState?
+
+                if Grammar.activeGrammar!.isGoal(key) {
+                    newState = AcceptState()
+                } else {
+                    newState = ReadbackState(
+                        items: finalItems.collect {
+                            Pair($0, raState)
+                        })
+
+                    readbackStates.append(newState as! ReadbackState)
+                }
+
+                Grammar.activeGrammar!.productionFor(key).followSet.do {
+                    raState.addTransition(
+                        Transition(
+                            label: Label(name: $0[0]),
+                            goto: newState!
+                        ))
+
+                    raState.transitions.last?.override(["look"])
+                }
+            }
+        }
+    }
+
+    func replaceSemanticTransitions(_ states: [FiniteStateMachineState]) {
+        states.do {
+            for transition in $0.transitions where transition.hasAction(){
+                buildSemanticState($0, transition: transition)                
+            }
+        }
+    }
+
+    func buildSemanticState(_ state: FiniteStateMachineState, transition: Transition){
+        // get follow set for goto
+        let follow = Grammar.activeGrammar!.productionFor(transition.goto.leftPart).followSet;
+
+        // build semantic state based on transition
+        let new_state = SemanticState(transition.label, goto: transition.goto);
+
+        // add follow to transitions from state to new semantic state
+        for char in Array(follow){
+            state.addTransition(Transition(label: Label(name: char), goto: new_state))
+        }    
     }
 
     func walkIdentifier(_ tree: VirtualTree) -> Any {

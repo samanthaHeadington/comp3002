@@ -150,21 +150,8 @@ class Relation<Item: Relatable, Relationship: Relatable>: CustomStringConvertibl
         return result
     }
 
-    func performOnce(_ items: [Item]) -> [Item] {
-        var result: [Item] = []
-
-        items.do {
-            self.from([$0]) { relationship, relation in
-                let new_items = relation.allTo()
-                result.appendIfAbsent(new_items)
-            }
-        }
-
-        return result
-    }
-
     func performRelationStar(_ items: [Item]) -> Relation<Item, Relationship> {
-        var result: Relation = Relation<Item, Relationship>()
+        var result: Relation = Relation<Item, Relationship>();
 
         result.do { fromItem, relationship, toItem in
             from([fromItem]) { relationship, relation in
@@ -177,6 +164,7 @@ class Relation<Item: Relatable, Relationship: Relatable>: CustomStringConvertibl
 
         return result
     }
+
 
     static func example1() {
         //Relation.example1 ()
