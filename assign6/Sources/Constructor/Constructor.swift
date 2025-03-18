@@ -181,7 +181,7 @@ public final class Constructor: Translator {
     }
 
     func renumber() {
-        var count = 0
+        var count = Grammar.activeGrammar!.totalStates()
         for state in readaheadStates {
             state.stateNumber = count
             count += 1
@@ -241,21 +241,65 @@ public final class Constructor: Translator {
             walkTree($0)
         }
 
-        // skip first nonterminal (augmented production nonterminal)
-        Grammar.activeGrammar!.nonterminals.doWithoutFirst {
-            reduceStates[$0] = ReduceState($0)
+        Grammar.activeGrammar!.finalize()
+
+        Grammar.activeGrammar!.nonterminals.do {
+            if Grammar.activeGrammar!.productionFor($0).isGoal() {
+                acceptState = AcceptState()
+            } else {
+                reduceStates[$0] = ReduceState($0)
+            }
         }
+
+        buildRightAndDown()
 
         buildReadaheadStates()
 
         buildReadbackStateBridges()
+
+        finishBuildingReadbackStates()
+
+        renumber()
+
+        printStates()
+    }
+
+    func buildRightAndDown() {
+        for (key, value) in Grammar.activeGrammar!.productions {
+            value.fsm.states.do { state in
+                state.transitionsDo { transition in
+                    if Grammar.activeGrammar!.isNonterminal(transition.label.identifier()) {
+                        for goto in Grammar.activeGrammar!.productionFor(
+                            transition.label.identifier()
+                        ).fsm.states where goto.isInitial {
+                            down.add(state, and: transition.label, and: goto)
+                        }
+                    }
+
+                    right.add(state, and: transition.label, and: transition.goto)
+                }
+            }
+        }
+    }
+
+    func printStates() {
+        print("\n\nreadahead states:\n\(readaheadStates)")
+        print("\n\nreadback states:\n\(readbackStates)")
+        print("\n\nreduce states:\n\(reduceStates)")
+        print("\n\naccept states:\n\(acceptState)")
     }
 
     func buildReadaheadStates() {
+        print(right)
+        print(down)
+
         readaheadStates.append(ReadaheadState(Grammar.activeGrammar!.initialStateOfGoals()))
 
-        readaheadStates.mutatingDo { raState in
-            var localDown = down.performRelationStar(raState.items)
+        var i = 0
+
+        while i < readaheadStates.count {
+            let raState = readaheadStates[i]
+            let localDown = down.performRelationStar(raState.items)
 
             localDown.do {
                 up.add(Pair($2, raState), and: $1, and: Pair($0, raState))
@@ -264,19 +308,26 @@ public final class Constructor: Translator {
             var fromItems = localDown.allTo()
             fromItems.append(contentsOf: raState.items)
 
-            right.from(fromItems) { Mp, localRight in
+            right.from(fromItems) { M, localRight in
                 let candidate = ReadaheadState(localRight.allTo())
-                var successor = readaheadStates.firstIndex(of: candidate)
+                var successor = readaheadStates.firstSatisfying {
+                    $0.items == candidate.items
+                }
                 if successor == nil {
                     readaheadStates.append(candidate)
-                    successor = readaheadStates.lastIndex(of: candidate)
+                    successor = candidate
                 }
                 raState.addTransition(
-                    Transition(label: Mp, goto: readaheadStates[successor!]))
-                localRight.do {
-                    left.add(Pair($2, raState), and: $1, and: Pair($0, raState))
+                    Transition(label: M, goto: successor!))
+                localRight.do { from, relationship, to in
+                    left.add(
+                        Pair(to, successor!),
+                        and: Label(label: relationship, predecessor: successor!),
+                        and: Pair(from, raState))
                 }
             }
+
+            i += 1
         }
 
         visible_left = Relation(from: left.triples.filter { $0.relationship.isVisible() })
@@ -284,15 +335,19 @@ public final class Constructor: Translator {
     }
 
     func buildReadbackStateBridges() {
-        readaheadStates.mutatingDo { raState in
+        var i = 0
+        while i < readaheadStates.count {
+            let raState = readaheadStates[i]
             let finalItems = raState.items.filter { $0.isFinal }
             let partition = finalItems.partitionUsing { $0.leftPart }
 
             for (key, value) in partition {
                 var newState: FiniteStateMachineState?
 
-                if Grammar.activeGrammar!.isGoal(key) {
-                    newState = AcceptState()
+                if Grammar.activeGrammar!.isScanner() {
+
+                } else if Grammar.activeGrammar!.isGoal(key) {
+                    newState = acceptState
                 } else {
                     newState = ReadbackState(
                         items: finalItems.collect {
@@ -305,44 +360,47 @@ public final class Constructor: Translator {
                 Grammar.activeGrammar!.productionFor(key).followSet.do {
                     raState.addTransition(
                         Transition(
-                            label: Label(name: $0[0]),
+                            label: Label(name: $0[0]).asLook(),
                             goto: newState!
                         ))
-
-                    raState.transitions.last?.override(["look"])
                 }
             }
+
+            i += 1
         }
     }
 
     func finishBuildingReadbackStates() {
-        readbackStates.mutatingDo { rbState in
+        var i = 0
+        while i < readbackStates.count {
+            let rbState = readbackStates[i]
             let more_items = invisible_left.performStar(rbState.items)
 
             visible_left.from(more_items) { Mp, localLeft in
                 let candidate = ReadbackState(items: localLeft.allTo())
-                var successor = readbackStates.firstIndex(of: candidate)
+                var successor = readbackStates.firstSatisfying {
+                    $0.items == candidate.items
+                }
                 if successor == nil {
                     readbackStates.append(candidate)
-                    successor = readbackStates.lastIndex(of: candidate)
+                    successor = candidate
                 }
                 rbState.addTransition(
-                    Transition(label: Label(label: Mp), goto: readbackStates[successor!]))
+                    Transition(label: Label(label: Mp), goto: successor!))
             }
 
             let lookbacks =
-                lookbackFor(more_items.filter { ($0.first() as! FiniteStateMachineState).isInitial })
+                lookbackFor(
+                    more_items.filter { ($0.first() as! FiniteStateMachineState).isInitial })
 
             for label in lookbacks {
-                let right_part_fsm = (pair.first() as! FiniteStateMachineState)
-                let new_state = ReduceState(right_part_fsm.leftPart)
-
-                reduceStates[right_part_fsm.leftPart] = new_state
-
-                Grammar.activeGrammar!.productionFor(new_state.nonterminal).firstSet.do {
-                    rbState.addTransition(Transition(label: Label(name: $0), goto: new_state))
-                }
+                rbState.addTransition(
+                    Transition(
+                        label: Label(label: label), goto: reduceStates[label.predecessor!.leftPart]!
+                    ))
             }
+
+            i += 1
 
         }
     }

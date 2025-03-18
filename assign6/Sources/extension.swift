@@ -10,6 +10,7 @@ extension Array {
             operation(&self[i])
             i += 1
         }
+        print(self.count)
     }
     mutating func appendIf(_ elt: Element, _ predicate: Bool) {
         if predicate {

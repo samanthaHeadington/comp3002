@@ -28,8 +28,8 @@ let input_scanner: String = try String(contentsOf: URL(fileURLWithPath: "Sources
 
 print(Constructor.example1(grammar_text: input))
 
-Constructor.example1(grammar_text: input_scanner)
+//Constructor.example1(grammar_text: input_scanner)
 
-Constructor.exampleWithFirstFollow(grammar_text: input_first_follow)
+//Constructor.exampleWithFirstFollow(grammar_text: input_first_follow)
 
 // Relation<Int, String>.example4();

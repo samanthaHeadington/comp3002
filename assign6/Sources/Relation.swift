@@ -30,7 +30,8 @@ struct HashableTuple<Item: Relatable, Relationship: Relatable>: Hashable, Custom
     }
 
     var description: String {
-        return "(\(from.terseDescription) \(relationship.terseDescription) \(to.terseDescription))"
+        return
+            "(\(from.terseDescription), \(relationship.terseDescription), \(to.terseDescription))"
     }
 }
 
@@ -63,10 +64,11 @@ class Relation<Item: Relatable, Relationship: Relatable>: CustomStringConvertibl
     }
     var description: String {
         //Output format: Relation(from [(a1 b1 c1) (a2 b2 c2) …]).
-        let triplesDescription = triples.map {
+        var triplesDescription = triples.map {
             "\($0)"
         }
-        return "Relation(from: [\(triplesDescription.joined(separator: ", "))])"
+        triplesDescription.sort()
+        return "Relation(from: [\n\(triplesDescription.joined(separator: ",\n"))])"
     }
 
     func `do`(_ operation: (Item, Relationship, Item) -> Void) {

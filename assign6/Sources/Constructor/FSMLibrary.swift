@@ -434,7 +434,7 @@ public class ReadaheadState: FiniteStateMachineState {
 public class ReadbackState: FiniteStateMachineState {
     var items: [Pair] = []
 
-    public init(items: [Pair]){
+    public init(items: [Pair]) {
         self.items.append(contentsOf: items)
         super.init()
     }
@@ -472,7 +472,7 @@ public class SemanticState: FiniteStateMachineState {
 
 public class AcceptState: FiniteStateMachineState {
     override public var terseDescription: String {
-        return "AcceptState"
+        return "AcceptState \(stateNumber)"
     }
 }
 
@@ -614,7 +614,7 @@ public class Transition: Relatable {
     }
 
     public var description: String {
-        return "\(label)\ngoto \(goto.stateNumber)"
+        return "    \(label)\ngoto \(goto.stateNumber)"
     }
 
     public static func == (lhs: Transition, rhs: Transition) -> Bool {
@@ -634,18 +634,23 @@ public class Label: Relatable {
     var action: String = ""
     var parameters: [AnyHashable] = []
     var isRootBuilding: Bool = false
+    var predecessor: FiniteStateMachineState?
 
     init(name: UInt16) {
         self.name = name
         attributes = AttributeList(attributes: Grammar.defaultsFor(String(name)))
     }
 
-    init(name: String){
-        self.name = UInt16(name.first!.asciiValue!);
-        attributes = AttributeList(attributes: Grammar.defaultsFor(String(name)))
+    convenience init(name: String) {
+        self.init(name: UInt16(name.first!.asciiValue!))
     }
 
-    init(label: Label){
+    convenience init(label: Label, predecessor: FiniteStateMachineState) {
+        self.init(label: label)
+        self.predecessor = predecessor
+    }
+
+    init(label: Label) {
         name = label.name
         attributes = AttributeList(attributes: label.attributes)
         action = label.action
@@ -688,7 +693,7 @@ public class Label: Relatable {
         }
     }
 
-    func asLook() -> Label{
+    func asLook() -> Label {
         let new_label = Label(label: self)
         new_label.attributes.override(["look"])
         return new_label
@@ -705,7 +710,7 @@ public class Label: Relatable {
     }
 
     public var description: String {
-        return "    \(identifierWith$()) "
+        return "\(identifierWith$()) "
             + ((hasAttributes())
                 ? "\"\(attributes)\""
                 : "\"\(parameters.map{String(describing: $0)})\" \n"

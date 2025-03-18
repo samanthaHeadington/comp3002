@@ -69,6 +69,13 @@ class Grammar: CustomStringConvertible {
     func isNonterminal(_ name: String) -> Bool {
         return nonterminals.contains(name)
     }
+    func totalStates() -> Int{
+        var return_val = 0
+        for production in productions{
+            return_val += production.value.fsm.states.count
+        }
+        return return_val
+    }
 
     func isScanner() -> Bool { return type == "scanner" }
     func isParser() -> Bool { return type == "grammar" }
@@ -316,9 +323,9 @@ class Grammar: CustomStringConvertible {
 
     func renumber() {
         var next_start: Int = 0
-        for (key, value) in productions {
-            value.get_fsm().renumberFrom(next_start)
-            next_start += value.get_fsm().states.count
+        nonterminals.do {
+            productions[$0]!.fsm.renumberFrom(next_start)
+            next_start += productions[$0]!.get_fsm().states.count
         }
     }
 }
