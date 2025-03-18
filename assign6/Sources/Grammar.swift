@@ -24,11 +24,11 @@ extension Array where Element: Equatable {
 
 class Production: CustomStringConvertible {
     var leftPart: String = ""
-    var lookahead: [String]?
+    var lookahead: [Label]?
     var fsm: FiniteStateMachine = FiniteStateMachine()
     var generatesE: Bool = false
-    var firstSet: [String] = []
-    var followSet: [String] = []
+    var firstSet: [Label] = []
+    var followSet: [Label] = []
 
     func name(_ newName: String) { leftPart = newName }
     func rightPart() -> FiniteStateMachine { return fsm }
@@ -41,7 +41,7 @@ class Production: CustomStringConvertible {
             for symbol in lookahead! {
                 if index > 0 { string += " " }
                 index += 1
-                string += symbol
+                string += symbol.identifier()
             }
             string += "}"
         }
@@ -202,7 +202,7 @@ class Grammar: CustomStringConvertible {
                 for state in eSuccessors(production.fsm.initialStates()) {
                     for transition in state.transitions {
                         if isReadTerminalTransition(transition) {
-                            if production.firstSet.addIfAbsentAdded(transition.label.identifier()) {
+                            if production.firstSet.addIfAbsentAdded(transition.label) {
                                 changed = true
                             }
                             //if (!production.firstSet.contains)
@@ -254,23 +254,26 @@ class Grammar: CustomStringConvertible {
                         for r in eSuccessors([q]) {
                             for rTransition in r.transitions {
                                 if isReadTerminalTransition(rTransition) {
-                                    let a = rTransition.label.identifier()
+                                    let a = rTransition.label
                                     if Bproduction.followSet.addIfAbsentAdded(a) {
+                                        print(a)
                                         changed = true
                                     }
                                 } else if isNonterminalTransition(rTransition) {
-                                    let C = rTransition.label.identifier()
+                                    let C = rTransition.label
                                     if Bproduction.followSet.addAllIfAbsentAdded(
-                                        productionFor(C).firstSet)
+                                        productionFor(C.identifier()).firstSet)
                                     {
+                                        print(productionFor(C.identifier()).firstSet)
                                         changed = true
                                     }
                                 }
                             }
                             if r.isFinal {
                                 if Bproduction.followSet.addAllIfAbsentAdded(
-                                    productionFor(A).followSet)
+                                    production.followSet)
                                 {
+                                    print(production.followSet)
                                     changed = true
                                 }
                             }
@@ -294,14 +297,14 @@ class Grammar: CustomStringConvertible {
         print("")
         for nonterminal in nonterminals.sorted(by: <) {
             print(
-                "//First(\(nonterminal) = \((productionFor (nonterminal)).firstSet.sorted (by: <))"
+                "//First(\(nonterminal) = \((productionFor (nonterminal)).firstSet.map{$0.identifierWith$()}.sorted (by: <))"
             )
         }
 
         print("")
         for nonterminal in nonterminals.sorted(by: <) {
             print(
-                "//Follow(\(nonterminal) = \((productionFor (nonterminal)).followSet.sorted (by: <))"
+                "//Follow(\(nonterminal) = \((productionFor (nonterminal)).followSet.map{$0.identifierWith$()}.sorted (by: <))"
             )
         }
     }

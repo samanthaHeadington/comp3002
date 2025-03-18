@@ -166,11 +166,11 @@ public class FiniteStateMachine: CustomStringConvertible {
         renumber()
     }
 
-    func transitionNames() -> [String] {
-        var return_val: [String] = []
+    func transitionNames() -> [Label] {
+        var return_val: [Label] = []
         states.do {
             $0.transitions.do { transition in
-                return_val.append(transition.identifier())
+                return_val.append(transition.label)
             }
         }
 
@@ -628,7 +628,11 @@ public class Transition: Relatable {
 
 }
 
-public class Label: Relatable {
+public class Label: Relatable, Comparable {
+    public static func < (lhs: Label, rhs: Label) -> Bool {
+        return lhs.identifier() < rhs.identifier()
+    }
+
     var name: UInt16?
     var attributes: AttributeList = AttributeList()
     var action: String = ""

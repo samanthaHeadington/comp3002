@@ -308,7 +308,7 @@ public final class Constructor: Translator {
             var fromItems = localDown.allTo()
             fromItems.append(contentsOf: raState.items)
 
-            right.from(fromItems) { M, localRight in
+            right.from(fromItems.union(localDown.allTo())) { M, localRight in
                 let candidate = ReadaheadState(localRight.allTo())
                 var successor = readaheadStates.firstSatisfying {
                     $0.items == candidate.items
@@ -360,7 +360,7 @@ public final class Constructor: Translator {
                 Grammar.activeGrammar!.productionFor(key).followSet.do {
                     raState.addTransition(
                         Transition(
-                            label: Label(name: $0[0]).asLook(),
+                            label: $0.asLook(),
                             goto: newState!
                         ))
                 }

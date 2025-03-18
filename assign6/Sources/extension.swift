@@ -35,6 +35,11 @@ extension Array {
         }
         return nil
     }
+    func union(_ with: [Element]) -> [Element]{
+        var return_val = Array(self)
+        return_val.append(contentsOf: Array(with))
+        return return_val
+    }
     func descriptionWithNewLines() -> String {
         var return_val = "["
         for elt in self {
