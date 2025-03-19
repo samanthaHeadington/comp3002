@@ -440,7 +440,7 @@ public class ReadbackState: FiniteStateMachineState {
     }
 
     override public var terseDescription: String {
-        return "Readback \(stateNumber) \(items)"
+        return "Readback \(stateNumber) \(items.map{"(\(($0.first() as! FiniteStateMachineState).stateNumber), ReadaheadState \(($0.second() as! FiniteStateMachineState).stateNumber))"})"
     }
 }
 
@@ -682,7 +682,7 @@ public class Label: Relatable, Comparable {
 
     func hasAttributes() -> Bool { return name != nil }
     func hasAction() -> Bool { return action != "" }
-    func isVisible() -> Bool { return name! > 32 && name! < 127 }
+    func isVisible() -> Bool { return hasAttributes() && name! > 32 && name! < 127 }
 
     func contents() -> Any {
         return (hasAction()) ? parameters : attributes

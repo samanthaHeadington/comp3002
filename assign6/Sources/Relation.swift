@@ -166,18 +166,21 @@ class Relation<Item: Relatable, Relationship: Relatable>: CustomStringConvertibl
     }
 
     func performRelationStar(_ items: [Item]) -> Relation<Item, Relationship> {
-        var result: Relation = Relation<Item, Relationship>()
+        var result = [Item](items)
+        var return_val = Relation<Item, Relationship>()
 
-        result.do { fromItem, relationship, toItem in
-            from([fromItem]) { relationship, relation in
-                //let newItems = relation.allTo()
-                relation.do {
-                    result.addTriple($0)
+        var i = 0
+        while i < result.count {
+            from([result[i]]) { relationship, relation in
+                relation.do{
+                    return_val.addTriple($0)
                 }
+                result.appendIfAbsent(relation.allTo())
             }
+            i += 1
         }
 
-        return result
+        return return_val
     }
 
     static func example1() {

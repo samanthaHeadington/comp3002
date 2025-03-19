@@ -21,11 +21,11 @@ public final class Constructor: Translator {
     var acceptState: AcceptState = AcceptState()
 
     var right = Relation<FiniteStateMachineState, Label>()
-    var left = Relation<Pair, Label>()
+    var left = Relation<Pair, Pair>()
     var down = Relation<FiniteStateMachineState, Label>()
     var up = Relation<Pair, Label>()
-    var invisible_left = Relation<Pair, Label>()
-    var visible_left = Relation<Pair, Label>()
+    var invisible_left = Relation<Pair, Pair>()
+    var visible_left = Relation<Pair, Pair>()
 
     init() {
         resetParser()
@@ -297,22 +297,28 @@ public final class Constructor: Translator {
 
         var i = 0
 
-        while i < readaheadStates.count {
+        while i < readaheadStates.count{
             let raState = readaheadStates[i]
             let localDown = down.performRelationStar(raState.items)
+
+            print("\n\n    ~~~~~ \(i) ~~~~~    \n\n")
 
             localDown.do {
                 up.add(Pair($2, raState), and: $1, and: Pair($0, raState))
             }
 
-            var fromItems = localDown.allTo()
-            fromItems.append(contentsOf: raState.items)
+            raState.items.append(contentsOf: localDown.allTo())
 
-            right.from(fromItems.union(localDown.allTo())) { M, localRight in
+            print("\(i), \(localDown)\n")
+            print(raState.items)
+
+            right.from(raState.items) { M, localRight in
+                print(localRight.allTo())
                 let candidate = ReadaheadState(localRight.allTo())
                 var successor = readaheadStates.firstSatisfying {
-                    $0.items == candidate.items
+                    $0.items.contains(candidate.items)
                 }
+                //print(candidate)
                 if successor == nil {
                     readaheadStates.append(candidate)
                     successor = candidate
@@ -322,7 +328,7 @@ public final class Constructor: Translator {
                 localRight.do { from, relationship, to in
                     left.add(
                         Pair(to, successor!),
-                        and: Label(label: relationship, predecessor: successor!),
+                        and: Pair(relationship, successor!),
                         and: Pair(from, raState))
                 }
             }
@@ -330,8 +336,8 @@ public final class Constructor: Translator {
             i += 1
         }
 
-        visible_left = Relation(from: left.triples.filter { $0.relationship.isVisible() })
-        invisible_left = Relation(from: left.triples.filter { !$0.relationship.isVisible() })
+        visible_left = Relation(from: left.triples.filter { ($0.relationship.first() as! Label).isVisible() })
+        invisible_left = Relation(from: left.triples.filter { !($0.relationship.first() as! Label).isVisible() })
     }
 
     func buildReadbackStateBridges() {
@@ -386,17 +392,21 @@ public final class Constructor: Translator {
                     successor = candidate
                 }
                 rbState.addTransition(
-                    Transition(label: Label(label: Mp), goto: successor!))
+                    Transition(label: Label(label: Mp.first() as! Label), goto: successor!))
             }
 
             let lookbacks =
                 lookbackFor(
                     more_items.filter { ($0.first() as! FiniteStateMachineState).isInitial })
 
-            for label in lookbacks {
+            for Mp in lookbacks {
+                var goto: FiniteStateMachineState? = reduceStates[(Mp.second() as! FiniteStateMachineState).leftPart]
+                if(goto == nil){
+                    goto = acceptState
+                }
                 rbState.addTransition(
                     Transition(
-                        label: Label(label: label), goto: reduceStates[label.predecessor!.leftPart]!
+                        label: Label(label: Mp.first() as! Label), goto: goto!
                     ))
             }
 
@@ -405,7 +415,7 @@ public final class Constructor: Translator {
         }
     }
 
-    func lookbackFor(_ items: [Pair]) -> Set<Label> {
+    func lookbackFor(_ items: [Pair]) -> Set<Pair> {
         var result = up.performOnce(items)
 
         var i = 0
@@ -421,10 +431,10 @@ public final class Constructor: Translator {
             i += 1
         }
 
-        var lookbacks = Set<Label>()
+        var lookbacks = Set<Pair>()
 
         visible_left.from(result) { Mp, relation in
-            lookbacks.insert(Mp.asLook())
+            lookbacks.insert(Pair((Mp.first() as! Label).asLook(), Mp.second()))
         }
 
         return lookbacks
