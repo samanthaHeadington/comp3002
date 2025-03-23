@@ -301,7 +301,7 @@ public final class Constructor: Translator {
             let raState = readaheadStates[i]
             let localDown = down.performRelationStar(raState.items)
 
-            print("\n\n    ~~~~~ \(i) ~~~~~    \n\n")
+            // print("\n\n    ~~~~~ \(i) ~~~~~    \n\n")
 
             localDown.do {
                 up.add(Pair($2, raState), and: $1, and: Pair($0, raState))
@@ -309,11 +309,11 @@ public final class Constructor: Translator {
 
             raState.items.append(contentsOf: localDown.allTo())
 
-            print("\(i), \(localDown)\n")
-            print(raState.items)
+            // print("\(i), \(localDown)\n")
+            // print(raState.items)
 
             right.from(raState.items) { M, localRight in
-                print(localRight.allTo())
+                // print(localRight.allTo())
                 let candidate = ReadaheadState(localRight.allTo())
                 var successor = readaheadStates.firstSatisfying {
                     $0.items.contains(candidate.items)
@@ -356,7 +356,7 @@ public final class Constructor: Translator {
                     newState = acceptState
                 } else {
                     newState = ReadbackState(
-                        items: finalItems.collect {
+                        items: finalItems.map {
                             Pair($0, raState)
                         })
 
@@ -472,6 +472,18 @@ public final class Constructor: Translator {
 
         return_val.lookahead = (walkTree((tree as! Tree).child(1)) as! FiniteStateMachine)
             .transitionNames()
+
+        // adds the lookahead transitions to a new final state
+        // this is to match the structure of the fsms from the slides, although I'm not currently sure if it's correct to do this
+        let new_final = FiniteStateMachineState()
+        new_final.isFinal = true
+
+        for state in return_val.fsm.states where state.isFinal{
+            return_val.lookahead!.do{
+                state.addTransition(Transition(label: $0, goto: new_final))
+            }
+            state.isFinal = false
+        }
 
         return return_val
     }

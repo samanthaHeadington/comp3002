@@ -273,25 +273,21 @@ public class FiniteStateMachine: CustomStringConvertible {
     }
 
     private static func forStringScanner(_ string: String) -> FiniteStateMachine {
-        return fromTransitions(string.map { Transition(name: $0.asciiValue!) } as! [Transition])
+        return fromTransitions(string.map { Transition(name: $0) } as! [Transition])
     }
 
     private static func forStringParser(_ string: String) -> FiniteStateMachine {
-        var return_val = fromTransition(Transition(name: Array(string)[0].asciiValue!))
-
-        Array(string).doWithoutFirst {
-            return_val = return_val .. fromTransition(Transition(name: $0.asciiValue!))
-        }
+        var return_val = fromTransition(Transition(name: string))
 
         return return_val
     }
 
     static func forCharacter(_ character: Character) -> FiniteStateMachine {
-        return fromTransition(Transition(name: UInt16((character).asciiValue!)))
+        return fromTransition(Transition(name: String(character)))
     }
 
     static func forInteger(_ integer: Int) -> FiniteStateMachine {
-        return fromTransition(Transition(name: UInt16(integer)))
+        return fromTransition(Transition(name: (integer > 32 && integer < 127) ? String(Character(UnicodeScalar(integer)!)) : String(integer)))
     }
 
     static func forDotDot(_ start: Int, _ end: Int) -> FiniteStateMachine {
@@ -495,12 +491,8 @@ public class Transition: CustomStringConvertible, Hashable {
     var label: Label
     var goto: FiniteStateMachineState = FiniteStateMachineState()
 
-    init(name: UInt16) {
+    init(name: String) {
         label = Label(name: name)
-    }
-
-    init(name: UInt8) {
-        label = Label(name: UInt16(name))
     }
 
     init(action: String, parameters: [AnyHashable], isRootBuilding: Bool) {
@@ -512,12 +504,12 @@ public class Transition: CustomStringConvertible, Hashable {
     }
 
     init(label: Label) {
-        self.label = label
+        self.label = Label(label: label)
         goto = FiniteStateMachineState()  // temp endpoint
     }
 
-    init(label: Label, goto: FiniteStateMachineState) {
-        self.label = label
+    convenience init(label: Label, goto: FiniteStateMachineState) {
+        self.init(label: label)
         self.goto = goto
     }
 
@@ -562,15 +554,23 @@ public class Transition: CustomStringConvertible, Hashable {
 }
 
 public class Label: Hashable, CustomStringConvertible {
-    var name: UInt16?
+    var name: String?
     var attributes: AttributeList = AttributeList()
     var action: String = ""
     var parameters: [AnyHashable] = []
     var isRootBuilding: Bool = false
 
-    init(name: UInt16) {
+    init(name: String) {
         self.name = name
         attributes = AttributeList(attributes: Grammar.defaultsFor(String(name)))
+    }
+
+    init(label: Label) {
+        name = label.name
+        attributes = AttributeList(attributes: label.attributes)
+        action = label.action
+        parameters.append(contentsOf: label.parameters)
+        isRootBuilding = label.isRootBuilding
     }
 
     init(action: String, parameters: [AnyHashable], isRootBuilding: Bool) {
@@ -598,27 +598,14 @@ public class Label: Hashable, CustomStringConvertible {
         return (hasAction()) ? parameters : attributes
     }
     func identifier() -> String {
-        if hasAttributes() {
-            return (name! > 32 && name! < 127)  // printable ascii range
-                ? String(Character(UnicodeScalar(name!)!))
-                : String(name!)
-        } else {
-            return action
-        }
-    }
-
-    func identifierWith$() -> String {
-        if hasAttributes() {
-            return (name! > 32 && name! < 127)  // printable ascii range
-                ? "$" + String(Character(UnicodeScalar(name!)!))
-                : String(name!)
-        } else {
-            return action
-        }
+        return (hasAttributes()) ?
+            name!
+        :
+            action
     }
 
     public var description: String {
-        return "    \(identifierWith$()) "
+        return "    \(identifier()) "
             + ((hasAttributes())
                 ? "\"\(attributes)\""
                 : "\"\(parameters.map{String(describing: $0)})\" \n"

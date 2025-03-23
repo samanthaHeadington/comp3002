@@ -118,7 +118,7 @@ extension StringProtocol {
 }
 
 //Allows local pairs as dictionary keys.
-struct Pair<T: Hashable, U: Hashable>: Hashable {
+struct ParserPair<T: Hashable, U: Hashable>: Hashable {
     //Swift will automatically generates the hash(into:) method, which combines the hashes of first
     //and second to produce a hash value for the Pair instance.
     let first: T
@@ -161,7 +161,7 @@ protocol TableWithTransitionsWithStringKey {
 }
 
 protocol TableWithTransitionsWithPairKey {
-    var transitions: [Pair<String, Int>: (String, Int)] { get set }
+    var transitions: [ParserPair<String, Int>: (String, Int)] { get set }
 }
 
 class TableFactory {
@@ -331,7 +331,7 @@ class ReadbackTable: Table, TableWithTransitionsWithPairKey {
     var tableType = TableType.ReadbackTable
     var tableNumber: Int = -1
     var transducer: Transducer?
-    var transitions: [Pair<String, Int>: (String, Int)] = [:]
+    var transitions: [ParserPair<String, Int>: (String, Int)] = [:]
     init() {}
     
     //Array<Any> is really Array<((String, Int), String, Int)>; i.e., a pair, attributes and goto.
@@ -339,7 +339,7 @@ class ReadbackTable: Table, TableWithTransitionsWithPairKey {
         transitions = [:]
         for triple in rawTable {
             let (pair, attributes, goto) = triple as! ((String, Int), String, Int)
-            transitions[Pair(pair)] = (attributes, goto)
+            transitions[ParserPair(pair)] = (attributes, goto)
         }
     }
 
@@ -351,7 +351,7 @@ class ReadbackTable: Table, TableWithTransitionsWithPairKey {
         //Pick up the pair a (a string) and b (an integer).
         let a = parser.tokenStack[parser.left - 1].label as String?
         let b = parser.tableNumberStack[parser.left - 1] as Int
-        let pair = Pair((a!,b))
+        let pair = ParserPair((a!,b))
         if transitions[pair] == nil {
             throw TransducerError.designError("incorrect Readback tables")
         }

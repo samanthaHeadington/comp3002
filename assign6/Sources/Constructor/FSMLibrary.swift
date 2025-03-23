@@ -277,7 +277,7 @@ public class FiniteStateMachine: CustomStringConvertible {
     }
 
     private static func forStringScanner(_ string: String) -> FiniteStateMachine {
-        return fromTransitions(string.map { Transition(name: $0.asciiValue!) } as! [Transition])
+        return fromTransition(Transition(name: string))
     }
 
     private static func forStringParser(_ string: String) -> FiniteStateMachine {
@@ -562,12 +562,8 @@ public class Transition: Relatable {
     var label: Label
     var goto: FiniteStateMachineState = FiniteStateMachineState()
 
-    init(name: UInt16) {
+    init(name: String) {
         label = Label(name: name)
-    }
-
-    init(name: UInt8) {
-        label = Label(name: UInt16(name))
     }
 
     init(action: String, parameters: [AnyHashable], isRootBuilding: Bool) {
@@ -579,12 +575,12 @@ public class Transition: Relatable {
     }
 
     init(label: Label) {
-        self.label = label
+        self.label = Label(label: label)
         goto = FiniteStateMachineState()  // temp endpoint
     }
 
-    init(label: Label, goto: FiniteStateMachineState) {
-        self.label = label
+    convenience init(label: Label, goto: FiniteStateMachineState) {
+        self.init(label: label)
         self.goto = goto
     }
 
@@ -633,25 +629,16 @@ public class Label: Relatable, Comparable {
         return lhs.identifier() < rhs.identifier()
     }
 
-    var name: UInt16?
+    var name: String?
     var attributes: AttributeList = AttributeList()
     var action: String = ""
     var parameters: [AnyHashable] = []
     var isRootBuilding: Bool = false
     var predecessor: FiniteStateMachineState?
 
-    init(name: UInt16) {
+    init(name: String) {
         self.name = name
         attributes = AttributeList(attributes: Grammar.defaultsFor(String(name)))
-    }
-
-    convenience init(name: String) {
-        self.init(name: UInt16(name.first!.asciiValue!))
-    }
-
-    convenience init(label: Label, predecessor: FiniteStateMachineState) {
-        self.init(label: label)
-        self.predecessor = predecessor
     }
 
     init(label: Label) {
@@ -682,19 +669,16 @@ public class Label: Relatable, Comparable {
 
     func hasAttributes() -> Bool { return name != nil }
     func hasAction() -> Bool { return action != "" }
-    func isVisible() -> Bool { return hasAttributes() && name! > 32 && name! < 127 }
+    func isVisible() -> Bool { return hasAttributes()}
 
     func contents() -> Any {
         return (hasAction()) ? parameters : attributes
     }
     func identifier() -> String {
-        if hasAttributes() {
-            return (isVisible())  // printable ascii range
-                ? String(Character(UnicodeScalar(name!)!))
-                : String(name!)
-        } else {
-            return action
-        }
+        return (hasAttributes()) ?
+            name!
+        :
+            action
     }
 
     func asLook() -> Label {
@@ -703,18 +687,8 @@ public class Label: Relatable, Comparable {
         return new_label
     }
 
-    func identifierWith$() -> String {
-        if hasAttributes() {
-            return (name! > 32 && name! < 127)  // printable ascii range
-                ? "$" + String(Character(UnicodeScalar(name!)!))
-                : String(name!)
-        } else {
-            return action
-        }
-    }
-
     public var description: String {
-        return "\(identifierWith$()) "
+        return "\(identifier()) "
             + ((hasAttributes())
                 ? "\"\(attributes)\""
                 : "\"\(parameters.map{String(describing: $0)})\" \n"
