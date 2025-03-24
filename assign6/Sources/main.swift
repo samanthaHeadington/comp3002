@@ -1,14 +1,16 @@
 import Foundation
 
 let input: String = try String(
-    contentsOf: URL(fileURLWithPath: "Sources/Grammars/toyParserGrammarWithMacros.txt"),
+    contentsOf: URL(fileURLWithPath: "Sources/Grammars/LISPGrammarWithInvisibles.txt"),
     encoding: .utf8)
 
-let input_first_follow: String = try String(
-    contentsOf: URL(fileURLWithPath: "Sources/Grammars/toyParserGrammarToTestFollowSets.txt"),
-    encoding: .utf8)
+// first follow
+// let input : String = try String(
+//     contentsOf: URL(fileURLWithPath: "Sources/Grammars/toyParserGrammarToTestFollowSets.txt"),
+//     encoding: .utf8)
 
-let input_scanner: String = try String(contentsOf: URL(fileURLWithPath: "Sources/Grammars/toyScannerGrammar.txt"), encoding: .utf8)
+// scanner
+// let input: String = try String(contentsOf: URL(fileURLWithPath: "Sources/Grammars/toyScannerGrammar.txt"), encoding: .utf8)
 
 // part 1
 

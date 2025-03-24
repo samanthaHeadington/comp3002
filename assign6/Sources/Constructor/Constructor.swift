@@ -110,13 +110,41 @@ public final class Constructor: Translator {
     }
 
     public func canPerformAction(_ action: String) -> Bool {
-        if action == "processTypeNow" { return true }
+        if [
+            "processTypeNow",
+            "processAndDiscardDefaultsNow",
+            "walkKeywords",
+            "walkAttributeTerminalDefaults",
+            "walkAttributeNonterminalDefaults",
+            "walkOutput",
+            "walkAttributeDefaults",
+            "walkOptimize",
+        ].contains(action) {
+            return true
+        }
         return false
     }
 
     public func performAction(_ action: String, _ parameters: [Any]) {
-        if action == "processTypeNow" {
+        switch action {
+        case "processTypeNow":
             processTypeNow(parameters)
+        case "processAndDiscardDefaultsNow":
+            processAndDiscardDefaultsNow(parameters[0] as! VirtualTree)
+        case "walkKeywords":
+            walkKeywords(parameters[0] as! VirtualTree)
+        case "walkAttributeTerminalDefaults":
+            walkAttributeTerminalDefaults(parameters[0] as! VirtualTree)
+        case "walkAttributeNonterminalDefaults":
+            walkAttributeNonterminalDefaults(parameters[0] as! VirtualTree)
+        case "walkOutput":
+            walkOutput(parameters[0] as! VirtualTree)
+        case "walkAttributeDefaults":
+            walkAttributeDefaults(parameters[0] as! VirtualTree)
+        case "walkOptimize":
+            walkOptimize(parameters[0] as! VirtualTree)
+        default:
+            return
         }
     }
 
@@ -244,7 +272,9 @@ public final class Constructor: Translator {
         Grammar.activeGrammar!.finalize()
 
         Grammar.activeGrammar!.nonterminals.do {
-            if Grammar.activeGrammar!.productionFor($0).isGoal() {
+            if Grammar.activeGrammar!.productionFor($0).isGoal()
+                && Grammar.activeGrammar!.isParser()
+            {
                 acceptState = AcceptState()
             } else {
                 reduceStates[$0] = ReduceState($0)
@@ -257,9 +287,14 @@ public final class Constructor: Translator {
 
         buildReadbackStateBridges()
 
-        finishBuildingReadbackStates()
+        if Grammar.activeGrammar!.isParser() {
+            finishBuildingReadbackStates()
+        }
 
         renumber()
+
+        print(invisible_left)
+        print(visible_left)
 
         printStates()
     }
@@ -268,9 +303,9 @@ public final class Constructor: Translator {
         for (key, value) in Grammar.activeGrammar!.productions {
             value.fsm.states.do { state in
                 state.transitionsDo { transition in
-                    if Grammar.activeGrammar!.isNonterminal(transition.label.identifier()) {
+                    if Grammar.activeGrammar!.isNonterminal(transition.label.terseDescription) {
                         for goto in Grammar.activeGrammar!.productionFor(
-                            transition.label.identifier()
+                            transition.label.terseDescription
                         ).fsm.states where goto.isInitial {
                             down.add(state, and: transition.label, and: goto)
                         }
@@ -290,14 +325,13 @@ public final class Constructor: Translator {
     }
 
     func buildReadaheadStates() {
-        print(right)
-        print(down)
-
         readaheadStates.append(ReadaheadState(Grammar.activeGrammar!.initialStateOfGoals()))
+
+        readaheadStates[0].isInitial = true
 
         var i = 0
 
-        while i < readaheadStates.count{
+        while i < readaheadStates.count {
             let raState = readaheadStates[i]
             let localDown = down.performRelationStar(raState.items)
 
@@ -315,8 +349,8 @@ public final class Constructor: Translator {
             right.from(raState.items) { M, localRight in
                 // print(localRight.allTo())
                 let candidate = ReadaheadState(localRight.allTo())
-                var successor = readaheadStates.firstSatisfying {
-                    $0.items.contains(candidate.items)
+                var successor = readaheadStates.first {
+                    Set($0.items).contains(candidate.items)
                 }
                 //print(candidate)
                 if successor == nil {
@@ -336,8 +370,10 @@ public final class Constructor: Translator {
             i += 1
         }
 
-        visible_left = Relation(from: left.triples.filter { ($0.relationship.first() as! Label).isVisible() })
-        invisible_left = Relation(from: left.triples.filter { !($0.relationship.first() as! Label).isVisible() })
+        visible_left = Relation(
+            from: left.triples.filter { ($0.relationship.first() as! Label).isVisible() })
+        invisible_left = Relation(
+            from: left.triples.filter { !($0.relationship.first() as! Label).isVisible() })
     }
 
     func buildReadbackStateBridges() {
@@ -348,26 +384,28 @@ public final class Constructor: Translator {
             let partition = finalItems.partitionUsing { $0.leftPart }
 
             for (key, value) in partition {
-                var newState: FiniteStateMachineState?
+                var new_state: FiniteStateMachineState?
 
                 if Grammar.activeGrammar!.isScanner() {
-
+                    new_state = readaheadStates[0]
                 } else if Grammar.activeGrammar!.isGoal(key) {
-                    newState = acceptState
+                    new_state = acceptState
                 } else {
-                    newState = ReadbackState(
+                    new_state = ReadbackState(
                         items: finalItems.map {
                             Pair($0, raState)
                         })
 
-                    readbackStates.append(newState as! ReadbackState)
+                    new_state!.isInitial = true
+
+                    readbackStates.append(new_state as! ReadbackState)
                 }
 
                 Grammar.activeGrammar!.productionFor(key).followSet.do {
                     raState.addTransition(
                         Transition(
-                            label: $0.asLook(),
-                            goto: newState!
+                            label: Label(name: $0).asLook(),
+                            goto: new_state!
                         ))
                 }
             }
@@ -379,34 +417,38 @@ public final class Constructor: Translator {
     func finishBuildingReadbackStates() {
         var i = 0
         while i < readbackStates.count {
-            let rbState = readbackStates[i]
+            let rbState: ReadbackState = readbackStates[i]
             let more_items = invisible_left.performStar(rbState.items)
 
-            visible_left.from(more_items) { Mp, localLeft in
-                let candidate = ReadbackState(items: localLeft.allTo())
-                var successor = readbackStates.firstSatisfying {
-                    $0.items == candidate.items
+            visible_left.from(more_items) { Mp, local_left in
+                let candidate = ReadbackState(items: local_left.allTo())
+                var successor = readbackStates.first {
+                    $0.items.elementsEquivalent(candidate.items)
                 }
                 if successor == nil {
                     readbackStates.append(candidate)
                     successor = candidate
                 }
+
                 rbState.addTransition(
-                    Transition(label: Label(label: Mp.first() as! Label), goto: successor!))
+                    Transition(label: Label(label: Mp.first() as! Label, predecessor: Mp.second() as? FiniteStateMachineState), goto: successor!))
             }
+
+            let initial_items = more_items.filter { ($0.first() as! FiniteStateMachineState).isInitial }
 
             let lookbacks =
                 lookbackFor(
-                    more_items.filter { ($0.first() as! FiniteStateMachineState).isInitial })
+                    initial_items)
 
             for Mp in lookbacks {
-                var goto: FiniteStateMachineState? = reduceStates[(Mp.second() as! FiniteStateMachineState).leftPart]
-                if(goto == nil){
+                var goto: FiniteStateMachineState? = reduceStates[
+                    (initial_items[0].first() as! FiniteStateMachineState).leftPart]
+                if goto == nil {
                     goto = acceptState
                 }
                 rbState.addTransition(
                     Transition(
-                        label: Label(label: Mp.first() as! Label), goto: goto!
+                        label: Label(label: Mp.first() as! Label, predecessor: Mp.second() as? FiniteStateMachineState), goto: goto!
                     ))
             }
 
@@ -472,18 +514,6 @@ public final class Constructor: Translator {
 
         return_val.lookahead = (walkTree((tree as! Tree).child(1)) as! FiniteStateMachine)
             .transitionNames()
-
-        // adds the lookahead transitions to a new final state
-        // this is to match the structure of the fsms from the slides, although I'm not currently sure if it's correct to do this
-        let new_final = FiniteStateMachineState()
-        new_final.isFinal = true
-
-        for state in return_val.fsm.states where state.isFinal{
-            return_val.lookahead!.do{
-                state.addTransition(Transition(label: $0, goto: new_final))
-            }
-            state.isFinal = false
-        }
 
         return return_val
     }
@@ -635,6 +665,58 @@ public final class Constructor: Translator {
         return_val.override(["look"])
 
         return return_val
+    }
+
+    func processAndDiscardDefaultsNow(_ tree: VirtualTree) {
+        //Pick up the tree just built containing either the attributes, keywords, optimize, and output tree,
+        //process it with walkTree, and remove it from the tree stack... by replacing the entry by nil..."
+        var tree: Tree = parser!.treeStack.last as! Tree
+        walkTree(tree)
+        parser!.treeStack.removeLast()
+        parser!.treeStack.append(nil)
+    }
+
+    func walkKeywords(_ tree: VirtualTree) {
+        // Note: This walk routine is initiated by #processAndDiscardDefaultsNow which subsequently
+        //eliminates the tree to prevent generic tree walking later...|
+        //All it does is give the grammar the keywords and prints them..."
+        let keywords = (tree as! Tree).children.map { ($0 as! Token).symbol }
+        Grammar.activeGrammar!.keywords = keywords
+    }
+
+    func walkAttributeTerminalDefaults(_ tree: VirtualTree) {
+        //Note: This walk routine is initiated by #processAndDiscardDefaultsNow which subsequently
+        //eliminates the tree to prevent generic tree walking later...
+    }
+
+    func walkAttributeNonterminalDefaults(_ tree: VirtualTree) {
+        //Note: This walk routine is initiated by #processAndDiscardDefaultsNow which subsequently
+        //eliminates the tree to prevent generic tree walking later...
+    }
+
+    func walkOutput(_ tree: VirtualTree) {
+        //Note: This walk routine is initiated by #processAndDiscardDefaultsNow which subsequently
+        //eliminates the tree to prevent generic tree walking later...
+
+        // All it does is print the output language. We commented out code that records the
+        // output language in the grammar since the student version will currently output
+        // in the format their tool is written in; i.e., Smalltalk for Smalltalk users versus
+        // Swift for Swift users.
+    }
+
+    func walkAttributeDefaults(_ tree: VirtualTree) {
+        //Note: This walk routine is initiated by #processAndDiscardDefaultsNow which subsequently
+        //eliminates the tree to prevent generic tree walking later...
+    }
+
+    func walkOptimize(_ tree: VirtualTree) {
+        //Note: This walk routine is initiated by #processAndDiscardDefaultsNow which subsequently
+        //eliminates the tree to prevent generic tree walking later...
+
+        //All it does is allow 'chain reductions' and 'keep nonterminal transitions' to be used
+        //by Wilf's parser constructor. It does so by telling the grammar what the optimization is
+        //and the more advanced constructor he has to perform the optimizations. They are
+        //of no concern to the student constructor... so that code is commented out..."
     }
 
     var scannerTables: [Any] =

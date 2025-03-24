@@ -39,12 +39,15 @@ public class Pair : Relatable {
             let fsm1 = pair1.item1 as? FiniteStateMachineState
             let fsm2 = pair2.item1 as? FiniteStateMachineState
             if fsm1 !== fsm2 {return false}
+            // print("\(fsm1!.terseDescription), \(fsm2!.terseDescription), \(fsm1 == fsm2)")
         }
         
         let fsm1 = pair1.item2 as? FiniteStateMachineState
         let fsm2 = pair2.item2 as? FiniteStateMachineState
         if fsm1 !== fsm2 {return false}
         
+        // print("\(fsm1!.terseDescription), \(fsm2!.terseDescription), \(fsm1 == fsm2)\n")
+
         return true
     }
     
@@ -110,9 +113,9 @@ public class Pair : Relatable {
     
     public var terseDescription: String {
         if (self.isStatePair ()) {
-            return "[" + "\n(item1.stateNumber)" + ", " + "\n(item2.stateNumber)]"
+            return "[" + "\((item1 as! FiniteStateMachineState).stateNumber)" + ", " + "\((item2 as! FiniteStateMachineState).stateNumber)]"
         } else {
-            return "[" + "\n(item1)" + ", " + "\n(item2.stateNumber)]"
+            return "[" + "\(item1)" + ", " + "\((item2 as! FiniteStateMachineState).stateNumber)]"
         }
     }
     

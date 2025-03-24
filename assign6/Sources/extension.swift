@@ -27,18 +27,18 @@ extension Array {
             operation(self[i])
         }
     }
-    func firstSatisfying(_ predicate: (Element) -> Bool) -> Element? where Element: Equatable {
-        for elt in self {
-            if predicate(elt) {
-                return elt
-            }
-        }
-        return nil
-    }
     func union(_ with: [Element]) -> [Element]{
         var return_val = Array(self)
         return_val.append(contentsOf: Array(with))
         return return_val
+    }
+    func elementsEquivalent(_ other: [Element]) -> Bool where Element: Equatable{
+        for elt in other{
+            if !contains(elt){
+                return false
+            }
+        }
+        return true
     }
     func descriptionWithNewLines() -> String {
         var return_val = "["
