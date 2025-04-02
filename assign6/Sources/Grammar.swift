@@ -308,22 +308,6 @@ class Grammar: CustomStringConvertible {
 
     func finalize() {
         for (key, value) in productions {
-            if value.lookahead != nil{
-                for state in value.fsm.states where state.isFinal{
-                    // adds the lookahead transitions to a new final state
-                    // this is to match the structure of the fsms from the slides, although I'm not currently sure if it's correct to do this
-                    let new_final: FiniteStateMachineState = FiniteStateMachineState()
-                    new_final.isFinal = true
-
-                    value.lookahead!.do {
-                        state.addTransition(Transition(label: Label(name: $0).asLook(), goto: new_final))
-                    }
-                    state.isFinal = false
-
-                    value.fsm.addState(new_final)
-                }
-            }
-
             value.fsm.states.do {
                 $0.leftPart = key
             }
@@ -338,10 +322,10 @@ class Grammar: CustomStringConvertible {
     }
 
     func renumber() {
-        var next_start: Int = 0
-        nonterminals.do {
-            productions[$0]!.fsm.renumberFrom(next_start)
-            next_start += productions[$0]!.get_fsm().states.count
+        var next_start: Int = 1
+        for production in productions {
+            production.value.fsm.renumberFrom(next_start)
+            next_start += production.value.get_fsm().states.count
         }
     }
 }

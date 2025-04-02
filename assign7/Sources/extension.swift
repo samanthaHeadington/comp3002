@@ -10,6 +10,7 @@ extension Array {
             operation(&self[i])
             i += 1
         }
+        print(self.count)
     }
     mutating func appendIf(_ elt: Element, _ predicate: Bool) {
         if predicate {
@@ -26,13 +27,18 @@ extension Array {
             operation(self[i])
         }
     }
-    func firstSatisfying(_ predicate: (Element) -> Bool) -> Element? where Element: Equatable {
-        for elt in self {
-            if predicate(elt) {
-                return elt
+    func union(_ with: [Element]) -> [Element]{
+        var return_val = Array(self)
+        return_val.append(contentsOf: Array(with))
+        return return_val
+    }
+    func elementsEquivalent(_ other: [Element]) -> Bool where Element: Equatable{
+        for elt in other{
+            if !contains(elt){
+                return false
             }
         }
-        return nil
+        return true
     }
     func descriptionWithNewLines() -> String {
         var return_val = "["
@@ -70,7 +76,7 @@ extension Array {
         return result
     }
     mutating func appendIfAbsent(_ obj: Element) -> Bool where Element: Equatable {
-        if self.contains(obj) {
+        if self.first(where: {$0 == obj}) != nil {
             return false
         }
         self.append(obj)

@@ -30,7 +30,8 @@ struct HashableTuple<Item: Relatable, Relationship: Relatable>: Hashable, Custom
     }
 
     var description: String {
-        return "(\(from.terseDescription) \(relationship.terseDescription) \(to.terseDescription))"
+        return
+            "(\(from.terseDescription), \(relationship.terseDescription), \(to.terseDescription))"
     }
 }
 
@@ -63,10 +64,11 @@ class Relation<Item: Relatable, Relationship: Relatable>: CustomStringConvertibl
     }
     var description: String {
         //Output format: Relation(from [(a1 b1 c1) (a2 b2 c2) …]).
-        let triplesDescription = triples.map {
+        var triplesDescription = triples.map {
             "\($0)"
         }
-        return "Relation(from: [\(triplesDescription.joined(separator: ", "))])"
+        triplesDescription.sort()
+        return "Relation(from: [\n\(triplesDescription.joined(separator: ",\n"))])"
     }
 
     func `do`(_ operation: (Item, Relationship, Item) -> Void) {
@@ -150,21 +152,36 @@ class Relation<Item: Relatable, Relationship: Relatable>: CustomStringConvertibl
         return result
     }
 
-    func performRelationStar(_ items: [Item]) -> Relation<Item, Relationship> {
-        var result: Relation = Relation<Item, Relationship>();
+    func performOnce(_ items: [Item]) -> [Item] {
+        var result: [Item] = []
 
-        result.do { fromItem, relationship, toItem in
-            from([fromItem]) { relationship, relation in
-                //let newItems = relation.allTo()
-                relation.do {
-                    result.addTriple($0)
-                }
+        items.do {
+            self.from([$0]) { relationship, relation in
+                let new_items = relation.allTo()
+                result.appendIfAbsent(new_items)
             }
         }
 
         return result
     }
 
+    func performRelationStar(_ items: [Item]) -> Relation<Item, Relationship> {
+        var result = [Item](items)
+        var return_val = Relation<Item, Relationship>()
+
+        var i = 0
+        while i < result.count {
+            from([result[i]]) { relationship, relation in
+                relation.do{
+                    return_val.addTriple($0)
+                }
+                result.appendIfAbsent(relation.allTo())
+            }
+            i += 1
+        }
+
+        return return_val
+    }
 
     static func example1() {
         //Relation.example1 ()

@@ -33,6 +33,14 @@ public class FiniteStateMachine: CustomStringConvertible {
         renumber()
     }
 
+    func transitionsDo(_ operation: (inout Transition) -> Transition){
+        states.do(){
+            $0.transitionsDo { transition in
+                operation(&transition)
+            }
+        }
+    }
+
     func override(_ attributes: [String]) {
         for state in states {
             for transition in state.transitions {
@@ -170,7 +178,7 @@ public class FiniteStateMachine: CustomStringConvertible {
         var return_val: [String] = []
         states.do {
             $0.transitions.do { transition in
-                return_val.append(transition.identifier())
+                return_val.append(transition.label.terseDescription)
             }
         }
 
@@ -239,7 +247,7 @@ public class FiniteStateMachine: CustomStringConvertible {
             var existing_val: DualFiniteStateMachineState?
 
             for (key, value) in state_queue[i].getSuccessors() {
-                existing_val = state_queue.firstSatisfying {
+                existing_val = state_queue.first {
                     DualFiniteStateMachineState.equal(lhs: value, rhs: $0)
                 }
                 if existing_val != nil {
@@ -265,10 +273,9 @@ public class FiniteStateMachine: CustomStringConvertible {
     static func forAction(_ action: String, parameters: [AnyHashable], isRootBuilding: Bool)
         -> FiniteStateMachine
     {
-        var transition = Transition(
-            action: action, parameters: parameters, isRootBuilding: isRootBuilding)
-
-        return fromTransition(transition)
+        return fromTransition(
+            Transition(
+                action: action, parameters: parameters, isRootBuilding: isRootBuilding))
     }
 
     static func forString(_ string: String) -> FiniteStateMachine {
@@ -277,31 +284,32 @@ public class FiniteStateMachine: CustomStringConvertible {
     }
 
     private static func forStringScanner(_ string: String) -> FiniteStateMachine {
-        return fromTransitions(string.map { Transition(name: $0.asciiValue!) } as! [Transition])
+        return fromTransitions(string.map { Transition(name: $0) } as! [Transition])
     }
 
     private static func forStringParser(_ string: String) -> FiniteStateMachine {
-        var return_val = fromTransition(Transition(name: Array(string)[0].asciiValue!))
-
-        Array(string).doWithoutFirst {
-            return_val = return_val .. fromTransition(Transition(name: $0.asciiValue!))
-        }
-
-        return return_val
+        return fromTransition(Transition(name: string))
     }
 
     static func forCharacter(_ character: Character) -> FiniteStateMachine {
-        return fromTransition(Transition(name: UInt16((character).asciiValue!)))
+        return fromTransition(Transition(name: String(character)))
+    }
+
+    private static func intAsString(_ integer: Int) -> String {
+        return (integer > 32 && integer < 127)
+            ? String(Character(UnicodeScalar(integer)!)) : String(integer)
     }
 
     static func forInteger(_ integer: Int) -> FiniteStateMachine {
-        return fromTransition(Transition(name: UInt16(integer)))
+        return fromTransition(
+            Transition(
+                name: intAsString(integer)))
     }
 
     static func forDotDot(_ start: Int, _ end: Int) -> FiniteStateMachine {
         var dotdot_string = ""
         for i in start...end {
-            dotdot_string.append(Character(UnicodeScalar(i)!))
+            dotdot_string.append(intAsString(i))
         }
         return forString(dotdot_string)
     }
@@ -367,6 +375,7 @@ public class FiniteStateMachineState: Relatable {
         isInitial = state.isInitial
         isFinal = state.isFinal
         transitions = state.transitions.map { return Transition(transition: $0) }
+        leftPart = state.leftPart
     }
 
     public var description: String {
@@ -434,22 +443,39 @@ public class ReadaheadState: FiniteStateMachineState {
 public class ReadbackState: FiniteStateMachineState {
     var items: [Pair] = []
 
-    public init(items: [Pair]){
+    public init(items: [Pair]) {
         self.items.append(contentsOf: items)
         super.init()
     }
 
     override public var terseDescription: String {
-        return "ReadaheadState \(stateNumber) \(items)"
+        return
+            "Readback \(stateNumber) \(items.map{"(\(($0.first() as! FiniteStateMachineState).stateNumber), ReadaheadState \(($0.second() as! FiniteStateMachineState).stateNumber))"})"
+    }
+}
+
+public class ShiftState: FiniteStateMachineState{
+    var shiftVal: Int
+    var goto: FiniteStateMachineState
+
+    init(_ shiftVal: Int, _ goto: FiniteStateMachineState){
+        self.shiftVal = shiftVal
+        self.goto = goto
+        super.init()
     }
 }
 
 public class ReduceState: FiniteStateMachineState {
     var nonterminal: String
+    var restarts: [FiniteStateMachineState: [FiniteStateMachineState]] = [:]
 
     init(_ nonterminal: String) {
         self.nonterminal = nonterminal
         super.init()
+    }
+
+    override public var terseDescription: String{
+        return "Reduce to \(nonterminal)"//: (\(restarts.map{"\($0.key): [\($0.value.map{state in "\(state.terseDescription)"}.joined(separator: ", "))]"}))"
     }
 
 }
@@ -466,13 +492,13 @@ public class SemanticState: FiniteStateMachineState {
     }
 
     override public var terseDescription: String {
-        return "SemanticState \(label) goto \(goto.stateNumber)"
+        return "SemanticState \(stateNumber) \n\(label) \ngoto \(goto.stateNumber)"
     }
 }
 
 public class AcceptState: FiniteStateMachineState {
     override public var terseDescription: String {
-        return "AcceptState"
+        return "AcceptState \(stateNumber)"
     }
 }
 
@@ -562,12 +588,8 @@ public class Transition: Relatable {
     var label: Label
     var goto: FiniteStateMachineState = FiniteStateMachineState()
 
-    init(name: UInt16) {
+    init(name: String) {
         label = Label(name: name)
-    }
-
-    init(name: UInt8) {
-        label = Label(name: UInt16(name))
     }
 
     init(action: String, parameters: [AnyHashable], isRootBuilding: Bool) {
@@ -578,14 +600,13 @@ public class Transition: Relatable {
         self.init(label: transition.label)
     }
 
-    init(label: Label) {
-        self.label = label
-        goto = FiniteStateMachineState()  // temp endpoint
+    init(label: Label, goto: FiniteStateMachineState) {
+        self.label = Label(label: label)
+        self.goto = goto  // temp endpoint
     }
 
-    init(label: Label, goto: FiniteStateMachineState) {
-        self.label = label
-        self.goto = goto
+    convenience init(label: Label) {
+        self.init(label: label, goto: FiniteStateMachineState())
     }
 
     func setAttributes(_ attributes: AttributeList) {
@@ -596,8 +617,8 @@ public class Transition: Relatable {
         return label.contents()
     }
 
-    func identifier() -> String {
-        return label.identifier()
+    var terseDescription: String {
+        return label.terseDescription
     }
 
     func hasAttributes() -> Bool { return label.hasAttributes() }
@@ -614,7 +635,7 @@ public class Transition: Relatable {
     }
 
     public var description: String {
-        return "\(label)\ngoto \(goto.stateNumber)"
+        return "    \(label)\ngoto \(goto.stateNumber)"
     }
 
     public static func == (lhs: Transition, rhs: Transition) -> Bool {
@@ -628,21 +649,38 @@ public class Transition: Relatable {
 
 }
 
-public class Label: Relatable {
-    var name: UInt16?
+public class Label: Relatable, Comparable {
+    public static func < (lhs: Label, rhs: Label) -> Bool {
+        return lhs.terseDescription < rhs.terseDescription
+    }
+
+    var name: String?
     var attributes: AttributeList = AttributeList()
     var action: String = ""
     var parameters: [AnyHashable] = []
     var isRootBuilding: Bool = false
+    var predecessor: FiniteStateMachineState?
 
-    init(name: UInt16) {
+    init(name: String) {
         self.name = name
         attributes = AttributeList(attributes: Grammar.defaultsFor(String(name)))
     }
 
-    init(name: String){
-        self.name = UInt16(name.first!.asciiValue!);
-        attributes = AttributeList(attributes: Grammar.defaultsFor(String(name)))
+    init(label: Label, predecessor: FiniteStateMachineState?) {
+        name = label.name
+        attributes = AttributeList(attributes: label.attributes)
+        action = label.action
+        parameters.append(contentsOf: label.parameters)
+        isRootBuilding = label.isRootBuilding
+        if predecessor != nil {
+            self.predecessor = predecessor
+        } else {
+            self.predecessor = label.predecessor
+        }
+    }
+
+    convenience init(label: Label) {
+        self.init(label: label, predecessor: nil)
     }
 
     init(action: String, parameters: [AnyHashable], isRootBuilding: Bool) {
@@ -665,37 +703,29 @@ public class Label: Relatable {
 
     func hasAttributes() -> Bool { return name != nil }
     func hasAction() -> Bool { return action != "" }
-    func isVisible() -> Bool { return name! > 32 && name! < 127 }
+    func isVisible() -> Bool { return hasAttributes() && attributes.isRead }
+    func isInvisible() -> Bool {return hasAction() || !attributes.isRead}
 
     func contents() -> Any {
         return (hasAction()) ? parameters : attributes
     }
-    func identifier() -> String {
-        if hasAttributes() {
-            return (isVisible())  // printable ascii range
-                ? String(Character(UnicodeScalar(name!)!))
-                : String(name!)
-        } else {
-            return action
-        }
+    var terseDescription: String {
+        return "\((hasAttributes()) ? name! : action)"
     }
 
-    func identifierWith$() -> String {
-        if hasAttributes() {
-            return (name! > 32 && name! < 127)  // printable ascii range
-                ? "$" + String(Character(UnicodeScalar(name!)!))
-                : String(name!)
-        } else {
-            return action
-        }
+    func asLook() -> Label {
+        let new_label = Label(label: self)
+        new_label.attributes.override(["look"])
+        return new_label
     }
 
     public var description: String {
-        return "    \(identifierWith$()) "
+        return "\(terseDescription) "
             + ((hasAttributes())
                 ? "\"\(attributes)\""
                 : "\"\(parameters.map{String(describing: $0)})\" \n"
                     + "    isRootBuilding: \(isRootBuilding)")
+            + ((predecessor != nil) ? ", \(predecessor!.stateNumber)" : "")
     }
 
     public static func == (lhs: Label, rhs: Label) -> Bool {

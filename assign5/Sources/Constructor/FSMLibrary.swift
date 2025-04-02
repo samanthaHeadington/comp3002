@@ -60,7 +60,7 @@ public class FiniteStateMachine: CustomStringConvertible {
     }
 
     static func empty() -> FiniteStateMachine {
-        var return_val = FiniteStateMachine()
+        let return_val = FiniteStateMachine()
 
         return_val.states.append(FiniteStateMachineState())
         return_val.states[0].isInitial = true
@@ -131,7 +131,7 @@ public class FiniteStateMachine: CustomStringConvertible {
     func reduce() {
         renumber()  // this function will fail if there are duplicate state numbers, so they're renumbered here for safety
 
-        var as_relation = Relation<Int, String>(from: getAsTriples())
+        let as_relation = Relation<Int, String>(from: getAsTriples())
 
         let reachable_from_initial = as_relation.performStar(
             states.filter { $0.isInitial }.map { $0.stateNumber })
@@ -216,7 +216,7 @@ public class FiniteStateMachine: CustomStringConvertible {
         _ isFinal: (DualFiniteStateMachineState) -> Bool
     ) -> FiniteStateMachine {
 
-        var initial_state = DualFiniteStateMachineState()
+        let initial_state = DualFiniteStateMachineState()
         initial_state.isInitial = true
 
         for state in lhs.states where state.isInitial {
@@ -229,7 +229,7 @@ public class FiniteStateMachine: CustomStringConvertible {
         var state_queue: [DualFiniteStateMachineState] = [initial_state]
         var i: Int = 0
 
-        while i < state_queue.count{
+        while i < state_queue.count {
             state_queue[i].isFinal = isFinal(state_queue[i])
 
             var existing_val: DualFiniteStateMachineState?
@@ -251,7 +251,7 @@ public class FiniteStateMachine: CustomStringConvertible {
             i += 1
         }
 
-        var return_val = FiniteStateMachine(states: state_queue)
+        let return_val = FiniteStateMachine(states: state_queue)
 
         return_val.reduce()
 
@@ -261,10 +261,9 @@ public class FiniteStateMachine: CustomStringConvertible {
     static func forAction(_ action: String, parameters: [AnyHashable], isRootBuilding: Bool)
         -> FiniteStateMachine
     {
-        var transition = Transition(
-            action: action, parameters: parameters, isRootBuilding: isRootBuilding)
-
-        return fromTransition(transition)
+        return fromTransition(
+            Transition(
+                action: action, parameters: parameters, isRootBuilding: isRootBuilding))
     }
 
     static func forString(_ string: String) -> FiniteStateMachine {
@@ -277,23 +276,28 @@ public class FiniteStateMachine: CustomStringConvertible {
     }
 
     private static func forStringParser(_ string: String) -> FiniteStateMachine {
-        var return_val = fromTransition(Transition(name: string))
-
-        return return_val
+        return fromTransition(Transition(name: string))
     }
 
     static func forCharacter(_ character: Character) -> FiniteStateMachine {
         return fromTransition(Transition(name: String(character)))
     }
 
+    private static func intAsString(_ integer: Int) -> String{
+        return (integer > 32 && integer < 127)
+                    ? String(Character(UnicodeScalar(integer)!)) : String(integer)
+    }
+
     static func forInteger(_ integer: Int) -> FiniteStateMachine {
-        return fromTransition(Transition(name: (integer > 32 && integer < 127) ? String(Character(UnicodeScalar(integer)!)) : String(integer)))
+        return fromTransition(
+            Transition(
+                name: intAsString(integer)))
     }
 
     static func forDotDot(_ start: Int, _ end: Int) -> FiniteStateMachine {
         var dotdot_string = ""
         for i in start...end {
-            dotdot_string.append(Character(UnicodeScalar(i)!))
+            dotdot_string.append(intAsString(i))
         }
         return forString(dotdot_string)
     }
@@ -310,7 +314,7 @@ public class FiniteStateMachine: CustomStringConvertible {
     }
 
     static func fromTransition(_ transition: Transition) -> FiniteStateMachine {
-        var return_val = FiniteStateMachine()
+        let return_val = FiniteStateMachine()
 
         return_val.addState(FiniteStateMachineState())
         return_val.addState(FiniteStateMachineState())
@@ -598,10 +602,9 @@ public class Label: Hashable, CustomStringConvertible {
         return (hasAction()) ? parameters : attributes
     }
     func identifier() -> String {
-        return (hasAttributes()) ?
-            name!
-        :
-            action
+        return (hasAttributes())
+            ? name!
+            : action
     }
 
     public var description: String {
@@ -649,14 +652,12 @@ public class AttributeList: CustomStringConvertible, Hashable {
         return self
     }
 
-    static func fromString(_ attributes: String) -> AttributeList {
+    public init(_ attributes: String) {
         //Convert from the description notation below to an attribute list.
-        var attributeList: AttributeList = AttributeList()
-        attributeList.isRead = attributes.contains("R")  //"R" versus "L"
-        attributeList.isStack = attributes.contains("S")  //"S" versus no "S"
-        attributeList.isKeep = attributes.contains("K")  //"K" versus no "K"
-        attributeList.isNode = attributes.contains("N")  //"N" versus no "N"
-        return attributeList
+        isRead = attributes.contains("R")  //"R" versus "L"
+        isStack = attributes.contains("S")  //"S" versus no "S"
+        isKeep = attributes.contains("K")  //"K" versus no "K"
+        isNode = attributes.contains("N")  //"N" versus no "N"
     }
 
     public var description: String {

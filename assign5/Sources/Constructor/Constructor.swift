@@ -98,17 +98,45 @@ public final class Constructor: Translator {
     }
 
     public func canPerformAction(_ action: String) -> Bool {
-        if action == "processTypeNow" { return true }
+        if [
+            "processTypeNow",
+            "processAndDiscardDefaultsNow",
+            "walkKeywords",
+            "walkAttributeTerminalDefaults",
+            "walkAttributeNonterminalDefaults",
+            "walkOutput",
+            "walkAttributeDefaults",
+            "walkOptimize",
+        ].contains(action) {
+            return true
+        }
         return false
     }
 
     public func performAction(_ action: String, _ parameters: [Any]) {
-        if action == "processTypeNow" {
+        switch action {
+        case "processTypeNow":
             processTypeNow(parameters)
+        case "processAndDiscardDefaultsNow":
+            processAndDiscardDefaultsNow(parameters[0] as! VirtualTree)
+        case "walkKeywords":
+            walkKeywords(parameters[0] as! VirtualTree)
+        case "walkAttributeTerminalDefaults":
+            walkAttributeTerminalDefaults(parameters[0] as! VirtualTree)
+        case "walkAttributeNonterminalDefaults":
+            walkAttributeNonterminalDefaults(parameters[0] as! VirtualTree)
+        case "walkOutput":
+            walkOutput(parameters[0] as! VirtualTree)
+        case "walkAttributeDefaults":
+            walkAttributeDefaults(parameters[0] as! VirtualTree)
+        case "walkOptimize":
+            walkOptimize(parameters[0] as! VirtualTree)
+        default:
+            return
         }
     }
 
-    static public func exampleWithFirstFollow(grammar_text: String){
+    static public func exampleWithFirstFollow(grammar_text: String) {
         let grammar = Grammar()
         Grammar.activeGrammar = grammar
 
@@ -215,12 +243,13 @@ public final class Constructor: Translator {
         }
     }
 
-    func walkMacro(_ tree: VirtualTree){
-        var label: String = "";
+    func walkMacro(_ tree: VirtualTree) {
+        var label: String = ""
         inSymbolOnlyMode {
             label = walkTree((tree as! Tree).child(0)) as! String
         }
-        Grammar.activeGrammar?.addMacro(label, walkTree((tree as! Tree).child(1)) as! FiniteStateMachine)
+        Grammar.activeGrammar?.addMacro(
+            label, walkTree((tree as! Tree).child(1)) as! FiniteStateMachine)
     }
 
     func walkProduction(_ tree: VirtualTree) {
@@ -263,7 +292,7 @@ public final class Constructor: Translator {
         //     print(Grammar.activeGrammar!.productions[symbol]!);
         //     return FiniteStateMachine(fsm: Grammar.activeGrammar!.productions[symbol]!.fsm)
         // }else
-         if Grammar.activeGrammar!.macros[symbol] != nil {
+        if Grammar.activeGrammar!.macros[symbol] != nil {
             return FiniteStateMachine(fsm: Grammar.activeGrammar!.macros[symbol]!)
         } else {
             return FiniteStateMachine.forString(symbol)
@@ -387,6 +416,58 @@ public final class Constructor: Translator {
         return_val.override(["look"])
 
         return return_val
+    }
+
+    func processAndDiscardDefaultsNow(_ tree: VirtualTree) {
+        //Pick up the tree just built containing either the attributes, keywords, optimize, and output tree,
+        //process it with walkTree, and remove it from the tree stack... by replacing the entry by nil..."
+        var tree: Tree = parser!.treeStack.last as! Tree
+        walkTree(tree)
+        parser!.treeStack.removeLast()
+        parser!.treeStack.append(nil)
+    }
+
+    func walkKeywords(_ tree: VirtualTree) {
+        // Note: This walk routine is initiated by #processAndDiscardDefaultsNow which subsequently
+        //eliminates the tree to prevent generic tree walking later...|
+        //All it does is give the grammar the keywords and prints them..."
+        let keywords = (tree as! Tree).children.map { ($0 as! Token).symbol }
+        Grammar.activeGrammar!.keywords = keywords
+    }
+
+    func walkAttributeTerminalDefaults(_ tree: VirtualTree) {
+        //Note: This walk routine is initiated by #processAndDiscardDefaultsNow which subsequently
+        //eliminates the tree to prevent generic tree walking later...
+    }
+
+    func walkAttributeNonterminalDefaults(_ tree: VirtualTree) {
+        //Note: This walk routine is initiated by #processAndDiscardDefaultsNow which subsequently
+        //eliminates the tree to prevent generic tree walking later...
+    }
+
+    func walkOutput(_ tree: VirtualTree) {
+        //Note: This walk routine is initiated by #processAndDiscardDefaultsNow which subsequently
+        //eliminates the tree to prevent generic tree walking later...
+
+        // All it does is print the output language. We commented out code that records the
+        // output language in the grammar since the student version will currently output
+        // in the format their tool is written in; i.e., Smalltalk for Smalltalk users versus
+        // Swift for Swift users.
+    }
+
+    func walkAttributeDefaults(_ tree: VirtualTree) {
+        //Note: This walk routine is initiated by #processAndDiscardDefaultsNow which subsequently
+        //eliminates the tree to prevent generic tree walking later...
+    }
+
+    func walkOptimize(_ tree: VirtualTree) {
+        //Note: This walk routine is initiated by #processAndDiscardDefaultsNow which subsequently
+        //eliminates the tree to prevent generic tree walking later...
+
+        //All it does is allow 'chain reductions' and 'keep nonterminal transitions' to be used
+        //by Wilf's parser constructor. It does so by telling the grammar what the optimization is
+        //and the more advanced constructor he has to perform the optimizations. They are
+        //of no concern to the student constructor... so that code is commented out..."
     }
 
     var scannerTables: [Any] =

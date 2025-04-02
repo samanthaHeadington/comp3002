@@ -1,14 +1,16 @@
 import Foundation
 
 let input: String = try String(
-    contentsOf: URL(fileURLWithPath: "Sources/Grammars/toyParserGrammarWithMacros.txt"),
-    encoding: .utf8)
+    contentsOf: URL(fileURLWithPath: "Sources/Grammars/realParserGrammar.txt"),
+        encoding: .utf8)
 
-let input_first_follow: String = try String(
-    contentsOf: URL(fileURLWithPath: "Sources/Grammars/toyParserGrammarToTestFollowSets.txt"),
-    encoding: .utf8)
+// first follow
+// let input : String = try String(
+//     contentsOf: URL(fileURLWithPath: "Sources/Grammars/toyParserGrammarToTestFollowSets.txt"),
+//     encoding: .utf8)
 
-let input_scanner: String = try String(contentsOf: URL(fileURLWithPath: "Sources/Grammars/toyScannerGrammar.txt"), encoding: .utf8)
+// scanner
+// let input: String = try String(contentsOf: URL(fileURLWithPath: "Sources/Grammars/toyScannerGrammar.txt"), encoding: .utf8)
 
 // part 1
 
@@ -28,8 +30,8 @@ let input_scanner: String = try String(contentsOf: URL(fileURLWithPath: "Sources
 
 print(Constructor.example1(grammar_text: input))
 
-Constructor.example1(grammar_text: input_scanner)
+//Constructor.example1(grammar_text: input_scanner)
 
-Constructor.exampleWithFirstFollow(grammar_text: input_first_follow)
+//Constructor.exampleWithFirstFollow(grammar_text: input_first_follow)
 
 // Relation<Int, String>.example4();

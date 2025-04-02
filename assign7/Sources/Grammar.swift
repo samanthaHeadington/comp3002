@@ -69,9 +69,16 @@ class Grammar: CustomStringConvertible {
     func isNonterminal(_ name: String) -> Bool {
         return nonterminals.contains(name)
     }
+    func totalStates() -> Int {
+        var return_val = 0
+        for production in productions {
+            return_val += production.value.fsm.states.count
+        }
+        return return_val
+    }
 
     func isScanner() -> Bool { return type == "scanner" }
-    func isParser() -> Bool { return type == "grammar" }
+    func isParser() -> Bool { return type == "grammar" || type == "parser" }
     func addMacro(_ str: String, _ fsm: FiniteStateMachine) { macros[str] = fsm }
     func addProduction(_ str: String, _ production: Production) { productions[str] = production }
 
@@ -101,37 +108,38 @@ class Grammar: CustomStringConvertible {
     func initialStateOfGoals() -> [FiniteStateMachineState] {
         var return_val: [FiniteStateMachineState] = []
         for (key, value) in productions {
-            return_val.appendIf(contentsOf: value.fsm.states.filter { $0.isInitial }, value.isGoal())
+            return_val.appendIf(
+                contentsOf: value.fsm.states.filter { $0.isInitial }, value.isGoal())
         }
         return return_val
     }
 
-    func isGoal(_ nonterminal: String) -> Bool{
-        for(key, value) in productions{
-            if key == nonterminal && value.isGoal(){
-                return true;
+    func isGoal(_ nonterminal: String) -> Bool {
+        for (key, value) in productions {
+            if key == nonterminal && value.isGoal() {
+                return true
             }
         }
 
-        return false;
+        return false
     }
 
     func isReadTerminalTransition(_ transition: Transition) -> Bool {
         if transition.label.hasAction() { return false }  //Otherwise, it has attributes"
-        if isNonterminal(transition.label.identifier()) { return false }
+        if isNonterminal(transition.label.terseDescription) { return false }
         return transition.label.attributes.isRead
     }
 
     func isNonterminalTransition(_ transition: Transition) -> Bool {
         if transition.label.hasAction() { return false }  //Otherwise, it has attributes"
-        if isNonterminal(transition.label.identifier()) { return true }
+        if isNonterminal(transition.label.terseDescription) { return true }
         return false
     }
 
     func isETransitionLabel(_ label: Label) -> Bool {
         if label.hasAction() { return true }
         //So it must be a name with attributes...
-        let name = label.identifier()
+        let name = label.terseDescription
         if isNonterminal(name) { return productionFor(name).generatesE }
         //So it must be a nonterminal.
         if !label.attributes.isRead { return true }  //because its a look
@@ -195,13 +203,15 @@ class Grammar: CustomStringConvertible {
                 for state in eSuccessors(production.fsm.initialStates()) {
                     for transition in state.transitions {
                         if isReadTerminalTransition(transition) {
-                            if production.firstSet.addIfAbsentAdded(transition.label.identifier()) {
+                            if production.firstSet.addIfAbsentAdded(
+                                transition.label.terseDescription)
+                            {
                                 changed = true
                             }
                             //if (!production.firstSet.contains)
                         }
                         if isNonterminalTransition(transition) {
-                            var M = transition.label.identifier()  //NOT for information only
+                            var M = transition.label.terseDescription  //NOT for information only
                             if production.firstSet.addAllIfAbsentAdded(
                                 productionFor(M).firstSet)
                             {
@@ -240,21 +250,21 @@ class Grammar: CustomStringConvertible {
             for (A, production) in productions {  //A is for information only not to be confuxed with B or C
                 production.fsm.transitionsDo { (_ transition: Transition) -> Void in
                     if isNonterminalTransition(transition) {
-                        let B = transition.label.identifier()
+                        let B = transition.label.terseDescription
                         let Bproduction = productionFor(B)
                         let q = transition.goto
 
                         for r in eSuccessors([q]) {
                             for rTransition in r.transitions {
                                 if isReadTerminalTransition(rTransition) {
-                                    let a = rTransition.label.identifier()
-                                    if Bproduction.followSet.addIfAbsentAdded(a) {
+                                    let a = rTransition.label
+                                    if Bproduction.followSet.addIfAbsentAdded(a.terseDescription) {
                                         changed = true
                                     }
                                 } else if isNonterminalTransition(rTransition) {
-                                    let C = rTransition.label.identifier()
+                                    let C = rTransition.label
                                     if Bproduction.followSet.addAllIfAbsentAdded(
-                                        productionFor(C).firstSet)
+                                        productionFor(C.terseDescription).firstSet)
                                     {
                                         changed = true
                                     }
@@ -262,7 +272,7 @@ class Grammar: CustomStringConvertible {
                             }
                             if r.isFinal {
                                 if Bproduction.followSet.addAllIfAbsentAdded(
-                                    productionFor(A).followSet)
+                                    production.followSet)
                                 {
                                     changed = true
                                 }
@@ -272,6 +282,31 @@ class Grammar: CustomStringConvertible {
                 }
             }
         }
+    }
+
+    func getFollow(_ raState: ReadaheadState) -> [String] {
+        var return_val: [String] = []
+
+        eSuccessors([raState]).do {
+            $0.transitions.do { transition in
+                if !transition.label.hasAction() {
+                    if isNonterminalTransition(transition) {
+                        return_val.appendIfAbsent(productionFor(transition.label.name!).firstSet)
+                    } else {
+                        return_val.appendIfAbsent(transition.label.name!)
+                    }
+                }
+            }
+
+            if $0 as? ReadaheadState != nil {
+                let finals = ($0 as! ReadaheadState).items.filter { state in state.isFinal }
+                finals.map { state in state.leftPart }.do { nonterminal in
+                    return_val.appendIfAbsent(productionFor(nonterminal).followSet)
+                }
+            }
+        }
+
+        return return_val
     }
 
     func printEGeneratingFirstAndFollowSets() {
@@ -287,24 +322,26 @@ class Grammar: CustomStringConvertible {
         print("")
         for nonterminal in nonterminals.sorted(by: <) {
             print(
-                "//First(\(nonterminal) = \((productionFor (nonterminal)).firstSet.sorted (by: <))"
+                "//First(\(nonterminal)) = \((productionFor (nonterminal)).firstSet.sorted (by: <))"
             )
         }
 
         print("")
         for nonterminal in nonterminals.sorted(by: <) {
             print(
-                "//Follow(\(nonterminal) = \((productionFor (nonterminal)).followSet.sorted (by: <))"
+                "//Follow(\(nonterminal)) = \((productionFor (nonterminal)).followSet.sorted (by: <))"
             )
         }
     }
 
     func finalize() {
         for (key, value) in productions {
-            for state in value.fsm.states {
-                state.leftPart = key
+            value.fsm.states.do {
+                $0.leftPart = key
             }
         }
+
+        renumber()
 
         computeEGeneratingNonterminals()
         computeFirstSets()
@@ -313,10 +350,10 @@ class Grammar: CustomStringConvertible {
     }
 
     func renumber() {
-        var next_start: Int = 0
-        for (key, value) in productions {
-            value.get_fsm().renumberFrom(next_start)
-            next_start += value.get_fsm().states.count
+        var next_start: Int = 1
+        for production in productions {
+            production.value.fsm.renumberFrom(next_start)
+            next_start += production.value.get_fsm().states.count
         }
     }
 }

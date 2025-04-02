@@ -209,7 +209,7 @@ public final class Constructor: Translator {
     }
 
     func renumber() {
-        var count = Grammar.activeGrammar!.totalStates()
+        var count = 1//Grammar.activeGrammar!.totalStates()
         for state in readaheadStates {
             state.stateNumber = count
             count += 1

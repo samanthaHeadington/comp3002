@@ -10,7 +10,7 @@ let input: String = try String(
 //     encoding: .utf8)
 
 // scanner
-// let input: String = try String(contentsOf: URL(fileURLWithPath: "Sources/Grammars/toyScannerGrammar.txt"), encoding: .utf8)
+//let input: String = try String(contentsOf: URL(fileURLWithPath: "Sources/Grammars/toyScannerGrammar.txt"), encoding: .utf8)
 
 // part 1
 
