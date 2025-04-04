@@ -364,7 +364,7 @@ public final class Constructor: Translator {
 
         while i < readaheadStates.count {
             let raState = readaheadStates[i]
-            let localDown = down.performRelationStar(raState.initialItems)
+            let localDown = down.performRelationStar(raState.items)
 
             // print("\n\n    ~~~~~ \(i) ~~~~~    \n\n")
 
@@ -372,16 +372,16 @@ public final class Constructor: Translator {
                 up.add(Pair($2, raState), and: $1, and: Pair($0, raState))
             }
 
-            raState.initialItems.append(contentsOf: localDown.allTo())
+            raState.items.append(contentsOf: localDown.allTo())
 
             // print("\(i), \(localDown)\n")
             // print(raState.items)
 
-            right.from(raState.initialItems) { M, localRight in
+            right.from(raState.items) { M, localRight in
                 // print(localRight.allTo())
                 let candidate = ReadaheadState(localRight.allTo())
                 var successor = readaheadStates.first {
-                    Set($0.initialItems).contains(candidate.initialItems)
+                    Set($0.items).contains(candidate.items)
                 }
                 //print(candidate)
                 if successor == nil {
@@ -411,7 +411,7 @@ public final class Constructor: Translator {
         var i = 0
         while i < readaheadStates.count {
             let raState = readaheadStates[i]
-            let finalItems = raState.initialItems.filter { $0.isFinal }
+            let finalItems = raState.items.filter { $0.isFinal }
             let partition = finalItems.partitionUsing { $0.leftPart }
 
             for (key, value) in partition {
