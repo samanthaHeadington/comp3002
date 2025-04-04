@@ -463,6 +463,10 @@ public class ShiftState: FiniteStateMachineState{
         self.goto = goto
         super.init()
     }
+
+    override public var terseDescription: String{
+        return "Shift \(stateNumber) by \(shiftVal), goto \(goto.stateNumber)"
+    }
 }
 
 public class ReduceState: FiniteStateMachineState {

@@ -54,11 +54,11 @@ public final class Constructor: Translator {
         switch action {
         case "walkList":
             return walkList(tree)
-        case "walkIdentifier":
+        case "walkIdentifier", "walkSymbol":
             return walkIdentifier(tree)
         case "walkCharacter":
             return walkCharacter(tree)
-        case "walkString", "walkSymbol":
+        case "walkString":
             return walkString(tree)
         case "walkInteger":
             return walkInteger(tree)
@@ -310,8 +310,6 @@ public final class Constructor: Translator {
             finishBuildingReadbackStates()
         }
 
-        renumber()
-
         finalizeReduceTables()
 
         replaceSemanticTransitions()
@@ -366,7 +364,7 @@ public final class Constructor: Translator {
 
         while i < readaheadStates.count {
             let raState = readaheadStates[i]
-            let localDown = down.performRelationStar(raState.items)
+            let localDown = down.performRelationStar(raState.initialItems)
 
             // print("\n\n    ~~~~~ \(i) ~~~~~    \n\n")
 
@@ -374,16 +372,16 @@ public final class Constructor: Translator {
                 up.add(Pair($2, raState), and: $1, and: Pair($0, raState))
             }
 
-            raState.items.append(contentsOf: localDown.allTo())
+            raState.initialItems.append(contentsOf: localDown.allTo())
 
             // print("\(i), \(localDown)\n")
             // print(raState.items)
 
-            right.from(raState.items) { M, localRight in
+            right.from(raState.initialItems) { M, localRight in
                 // print(localRight.allTo())
                 let candidate = ReadaheadState(localRight.allTo())
                 var successor = readaheadStates.first {
-                    Set($0.items).contains(candidate.items)
+                    Set($0.initialItems).contains(candidate.initialItems)
                 }
                 //print(candidate)
                 if successor == nil {
@@ -413,7 +411,7 @@ public final class Constructor: Translator {
         var i = 0
         while i < readaheadStates.count {
             let raState = readaheadStates[i]
-            let finalItems = raState.items.filter { $0.isFinal }
+            let finalItems = raState.initialItems.filter { $0.isFinal }
             let partition = finalItems.partitionUsing { $0.leftPart }
 
             for (key, value) in partition {
@@ -593,16 +591,25 @@ public final class Constructor: Translator {
             }
         }
 
-        print(ra_invisible_left)
+        // print(ra_invisible_left)
 
         for rdState in reduceStates {
             for (key, value) in rdState.value.restarts {
-                value.do { state in
+                
+                var i = 0
+
+                while i < value.count { let state = value[i]
+                    i += 1
+
                     // print(raState.terseDescription)
                     // print(
                     //     ra_invisible_left.performStar([raState]).filter {
                     //         stackable_states.contains($0)
                     //     }.map { $0.terseDescription }.joined(separator: ", "))
+
+                    if(stackable_states.contains(state)){
+                        continue
+                    }
 
                     let alt_restarts = ra_invisible_left.performStar([state]).filter {
                         stackable_states.contains($0)
@@ -620,7 +627,7 @@ public final class Constructor: Translator {
 
     func optimize() {
         eliminateStates()
-        // readbackToShift()
+        readbackToShift()
     }
 
     func eliminateStates() {
@@ -654,12 +661,12 @@ public final class Constructor: Translator {
     func readbackToShift() {
         var dead_states: [FiniteStateMachineState] = []
         readbackStates.do { rbState in
-            if (rbState.transitions.allSatisfy {
-                $0.goto == rbState.transitions[0].goto
-            }) {
-                shiftStates.append(ShiftState(1, rbState.transitions[0].goto))
+            if (rbState.transitions.partitionUsing{$0.goto}.count == 1) {
+                let new_state = ShiftState(1, rbState.transitions[0].goto)
+                shiftStates.append(new_state)
+                
                 replaceState(
-                    rbState, with: shiftStates.last!)
+                    rbState, with: new_state)
                 dead_states.append(rbState)
             }
         }
@@ -668,18 +675,30 @@ public final class Constructor: Translator {
 
         dead_states.removeAll()
 
-        // merge consecutive shift states
-        shiftStates.do { shState in
-            if shState.goto as? ShiftState != nil {
-                dead_states.append(shState.goto)
-                replaceState(shState.goto, with: shState)
-
-                shState.shiftVal += (dead_states.last! as! ShiftState).shiftVal
-                shState.goto = (dead_states.last! as! ShiftState).goto
+        shiftStates.do{state in
+            if(!dead_states.contains(state)){
+                shiftStates.filter {$0 != state && $0.shiftVal == state.shiftVal && $0.goto == state.goto}.do{
+                    replaceState($0, with: state)
+                    dead_states.append($0)
+                }
             }
         }
 
         shiftStates.removeAll { dead_states.contains($0) }
+
+        dead_states.removeAll()
+
+        // merge consecutive shift states
+        mergeShifts()
+    }
+
+    func mergeShifts(){
+        shiftStates.do { shState in
+            if shState.goto as? ShiftState != nil {
+                shState.shiftVal += (shState.goto as! ShiftState).shiftVal
+                shState.goto = (shState.goto as! ShiftState).goto
+            }
+        }
     }
 
     func replaceState(_ old: FiniteStateMachineState, with new_state: FiniteStateMachineState) {
@@ -717,13 +736,21 @@ public final class Constructor: Translator {
 
         for rdState in reduceStates {
             for (key, value) in rdState.value.restarts {
+                var new_key = key
+
+                if(key == old){
+                    new_key = new_state
+                }
+
                 var new_value = value
                 new_value.removeAll { $0 == old }
-                if new_value.count < value.count {
+                if new_value.count < value.count || new_key != key{
                     new_value.appendIfAbsent(new_state)
-                    rdState.value.restarts[key] = new_value
+                    rdState.value.restarts[new_key] = new_value
                 }
             }
+
+            rdState.value.restarts.removeValue(forKey: old)
         }
     }
 
@@ -748,7 +775,7 @@ public final class Constructor: Translator {
 
         shiftStates.do { shState in
             tables.append(
-                "[\"ShiftbackTable\", \(shState.stateNumber), \(shState.shiftVal), \(shState.goto.terseDescription)],\n"
+                "[\"ShiftbackTable\", \(shState.stateNumber), \(shState.shiftVal), \(shState.goto.stateNumber)],\n"
             )
         }
 
@@ -832,7 +859,13 @@ public final class Constructor: Translator {
     }
 
     func walkIdentifier(_ tree: VirtualTree) -> Any {
-        let symbol: String = (tree as! Token).symbol
+        var symbol: String = (tree as! Token).symbol
+
+        if symbol.last! == ":"{
+            symbol.removeLast()
+        }
+
+        print(symbol)
 
         if symbolOnly {
             return symbol
@@ -860,9 +893,6 @@ public final class Constructor: Translator {
     func walkString(_ tree: VirtualTree) -> Any {
         if symbolOnly { return (tree as! Token).symbol }
         return FiniteStateMachine.forString((tree as! Token).symbol)
-    }
-    func walkSymbol(_ tree: VirtualTree) -> Any {
-        return walkString(tree)
     }
     func walkInteger(_ tree: VirtualTree) -> Any {
         if symbolOnly { return Int((tree as! Token).symbol)! }
@@ -963,7 +993,7 @@ public final class Constructor: Translator {
     }
 
     func walkLook(_ tree: VirtualTree) -> Any {
-        var return_val = walkTree((tree as! Tree).child(0)) as! FiniteStateMachine
+        let return_val = walkTree((tree as! Tree).child(0)) as! FiniteStateMachine
 
         return_val.override(["look"])
 
@@ -973,7 +1003,7 @@ public final class Constructor: Translator {
     func processAndDiscardDefaultsNow() {
         //Pick up the tree just built containing either the attributes, keywords, optimize, and output tree,
         //process it with walkTree, and remove it from the tree stack... by replacing the entry by nil..."
-        var tree: Tree = parser!.treeStack.last as! Tree
+        let tree: Tree = parser!.treeStack.last as! Tree
         walkTree(tree)
         parser!.treeStack.removeLast()
         parser!.treeStack.append(nil)

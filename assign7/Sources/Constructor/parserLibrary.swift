@@ -352,6 +352,7 @@ class ReadbackTable: Table, TableWithTransitionsWithPairKey {
         let a = parser.tokenStack[parser.left - 1].label as String?
         let b = parser.tableNumberStack[parser.left - 1] as Int
         let pair = ParserPair((a!,b))
+        print(pair)
         if transitions[pair] == nil {
             throw TransducerError.designError("incorrect Readback tables")
         }
@@ -453,7 +454,7 @@ class ReduceTable: Table, TableWithTransitionsWithIntKey {
         //        + create a new token using the nonterminal as a symbol
         //        + adjust `left` and `right`
         let tableNumber = parser.tableNumberStack.last!
-        debug ("Looking for \(tableNumber) + \(nonterminal) -> ?")
+        print ("Looking for \(tableNumber) + \(nonterminal) -> ?")
             
         if let transition = self.transitions[tableNumber] {
             let (attributes, goto) = transition
@@ -749,6 +750,7 @@ public final class Parser: Transducer {
         while table.tableType != .AcceptTable {
             print(table)
             print(index)
+
             do {
                 debug("Parser \(table.tableType) #\(index) is running...\n")
                 index = try table.run()! // The result returned is the next table to run

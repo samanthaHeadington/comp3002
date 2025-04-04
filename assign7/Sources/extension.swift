@@ -75,6 +75,9 @@ extension Array {
         }
         return result
     }
+    func printWithNewLines(){
+        print(self.map{"\($0)"}.joined(separator: ",\n"))
+    }
     mutating func appendIfAbsent(_ obj: Element) -> Bool where Element: Equatable {
         if self.first(where: {$0 == obj}) != nil {
             return false
