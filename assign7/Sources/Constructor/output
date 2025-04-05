@@ -1,0 +1,749 @@
+Optional(
+walkGrammar
+        walkProduction
+                walkLeftPartWithLookahead
+                        Token (label: walkIdentifier symbol: Grammar)
+                        Token (label: walkString symbol: -|)
+                walkOr
+                        walkConcatenation
+                                Token (label: walkString symbol: |-)
+                                Token (label: walkIdentifier symbol: GrammarType)
+                                walkStar
+                                        walkConcatenation
+                                                Token (label: walkIdentifier symbol: Defaults)
+                                                walkNonTreeBuildingSemanticAction
+                                                        walkSemanticAction
+                                                                Token (label: walkSymbol symbol: processAndDiscardDefaultsNow)
+                                Token (label: walkIdentifier symbol: Rules)
+        walkProduction
+                walkLeftPart
+                        Token (label: walkIdentifier symbol: GrammarType)
+                walkOr
+                        walkConcatenation
+                                Token (label: walkString symbol: parser)
+                                walkNonTreeBuildingSemanticAction
+                                        walkSemanticAction
+                                                Token (label: walkSymbol symbol: processTypeNow:)
+                                                Token (label: walkSymbol symbol: parser)
+                        walkConcatenation
+                                Token (label: walkString symbol: scanner)
+                                walkNonTreeBuildingSemanticAction
+                                        walkSemanticAction
+                                                Token (label: walkSymbol symbol: processTypeNow:)
+                                                Token (label: walkSymbol symbol: scanner)
+                        walkConcatenation
+                                Token (label: walkString symbol: super)
+                                Token (label: walkString symbol: scanner)
+                                walkNonTreeBuildingSemanticAction
+                                        walkSemanticAction
+                                                Token (label: walkSymbol symbol: processTypeNow:)
+                                                Token (label: walkSymbol symbol: superScanner)
+                        walkConcatenation
+                                Token (label: walkString symbol: superScanner)
+                                walkNonTreeBuildingSemanticAction
+                                        walkSemanticAction
+                                                Token (label: walkSymbol symbol: processTypeNow:)
+                                                Token (label: walkSymbol symbol: superScanner)
+        walkProduction
+                walkLeftPart
+                        Token (label: walkIdentifier symbol: Defaults)
+                walkOr
+                        walkConcatenation
+                                walkConcatenation
+                                        Token (label: walkString symbol: attribute)
+                                        Token (label: walkString symbol: defaults)
+                                        walkPlus
+                                                Token (label: walkIdentifier symbol: Name)
+                                        Token (label: walkString symbol: Dot)
+                                walkBuildTreeOrTokenFromName
+                                        Token (label: walkIdentifier symbol: walkAttributeDefaults:)
+                        walkConcatenation
+                                walkConcatenation
+                                        Token (label: walkString symbol: attribute)
+                                        Token (label: walkString symbol: terminal)
+                                        Token (label: walkString symbol: defaults)
+                                        walkPlus
+                                                Token (label: walkIdentifier symbol: Name)
+                                        Token (label: walkString symbol: Dot)
+                                walkBuildTreeOrTokenFromName
+                                        Token (label: walkIdentifier symbol: walkAttributeTerminalDefaults:)
+                        walkConcatenation
+                                walkConcatenation
+                                        Token (label: walkString symbol: attribute)
+                                        Token (label: walkString symbol: nonterminal)
+                                        Token (label: walkString symbol: defaults)
+                                        walkPlus
+                                                Token (label: walkIdentifier symbol: Name)
+                                        Token (label: walkString symbol: Dot)
+                                walkBuildTreeOrTokenFromName
+                                        Token (label: walkIdentifier symbol: walkAttributeNonterminalDefaults:)
+                        walkConcatenation
+                                walkConcatenation
+                                        Token (label: walkString symbol: keywords)
+                                        walkPlus
+                                                Token (label: walkIdentifier symbol: Name)
+                                        Token (label: walkString symbol: Dot)
+                                walkBuildTreeOrTokenFromName
+                                        Token (label: walkIdentifier symbol: walkKeywords:)
+                        walkConcatenation
+                                walkConcatenation
+                                        Token (label: walkString symbol: output)
+                                        Token (label: walkIdentifier symbol: Name)
+                                        Token (label: walkString symbol: Dot)
+                                walkBuildTreeOrTokenFromName
+                                        Token (label: walkIdentifier symbol: walkOutput:)
+                        walkConcatenation
+                                walkConcatenation
+                                        Token (label: walkString symbol: optimize)
+                                        Token (label: walkIdentifier symbol: Name)
+                                        Token (label: walkString symbol: Dot)
+                                walkBuildTreeOrTokenFromName
+                                        Token (label: walkIdentifier symbol: walkOptimize:)
+        walkProduction
+                walkLeftPart
+                        Token (label: walkIdentifier symbol: Rules)
+                walkOr
+                        walkConcatenation
+                                walkPlus
+                                        walkOr
+                                                Token (label: walkIdentifier symbol: Production)
+                                                Token (label: walkIdentifier symbol: Macro)
+                                walkBuildTreeOrTokenFromName
+                                        Token (label: walkIdentifier symbol: walkGrammar:)
+        walkProduction
+                walkLeftPart
+                        Token (label: walkIdentifier symbol: Macro)
+                walkOr
+                        walkConcatenation
+                                walkConcatenation
+                                        Token (label: walkIdentifier symbol: Name)
+                                        Token (label: walkString symbol: Equals)
+                                        Token (label: walkIdentifier symbol: Expression)
+                                        Token (label: walkString symbol: Dot)
+                                walkBuildTreeOrTokenFromName
+                                        Token (label: walkIdentifier symbol: walkMacro:)
+        walkProduction
+                walkLeftPart
+                        Token (label: walkIdentifier symbol: Production)
+                walkOr
+                        walkConcatenation
+                                walkConcatenation
+                                        Token (label: walkIdentifier symbol: LeftPart)
+                                        Token (label: walkIdentifier symbol: RightParts)
+                                        Token (label: walkString symbol: Dot)
+                                walkBuildTreeOrTokenFromName
+                                        Token (label: walkIdentifier symbol: walkProduction:)
+        walkProduction
+                walkLeftPart
+                        Token (label: walkIdentifier symbol: LeftPart)
+                walkOr
+                        walkConcatenation
+                                Token (label: walkIdentifier symbol: Name)
+                                walkBuildTreeOrTokenFromName
+                                        Token (label: walkIdentifier symbol: walkLeftPart:)
+                        walkConcatenation
+                                walkConcatenation
+                                        Token (label: walkIdentifier symbol: Name)
+                                        Token (label: walkString symbol: OpenCurly)
+                                        Token (label: walkIdentifier symbol: Expression)
+                                        Token (label: walkString symbol: CloseCurly)
+                                walkBuildTreeOrTokenFromName
+                                        Token (label: walkIdentifier symbol: walkLeftPartWithLookahead:)
+        walkProduction
+                walkLeftPart
+                        Token (label: walkIdentifier symbol: RightParts)
+                walkOr
+                        walkConcatenation
+                                walkPlus
+                                        Token (label: walkIdentifier symbol: RightPart)
+                                walkBuildTreeOrTokenFromName
+                                        Token (label: walkIdentifier symbol: walkOr:)
+        walkProduction
+                walkLeftPart
+                        Token (label: walkIdentifier symbol: RightPart)
+                walkOr
+                        walkConcatenation
+                                Token (label: walkString symbol: RightArrow)
+                                Token (label: walkIdentifier symbol: Expression)
+                        walkConcatenation
+                                walkConcatenation
+                                        Token (label: walkString symbol: RightArrow)
+                                        Token (label: walkIdentifier symbol: Expression)
+                                        Token (label: walkString symbol: FatRightArrow)
+                                        Token (label: walkIdentifier symbol: TreeBuildingOptions)
+                                walkBuildTreeOrTokenFromName
+                                        Token (label: walkIdentifier symbol: walkConcatenation:)
+        walkProduction
+                walkLeftPart
+                        Token (label: walkIdentifier symbol: Expression)
+                walkOr
+                        Token (label: walkIdentifier symbol: AndExpression)
+                        walkConcatenation
+                                walkConcatenation
+                                        Token (label: walkIdentifier symbol: AndExpression)
+                                        Token (label: walkString symbol: Minus)
+                                        Token (label: walkIdentifier symbol: AndExpression)
+                                walkBuildTreeOrTokenFromName
+                                        Token (label: walkIdentifier symbol: walkMinus:)
+        walkProduction
+                walkLeftPart
+                        Token (label: walkIdentifier symbol: AndExpression)
+                walkOr
+                        Token (label: walkIdentifier symbol: Alternation)
+                        walkConcatenation
+                                walkConcatenation
+                                        Token (label: walkIdentifier symbol: Alternation)
+                                        Token (label: walkString symbol: And)
+                                        Token (label: walkIdentifier symbol: Alternation)
+                                walkBuildTreeOrTokenFromName
+                                        Token (label: walkIdentifier symbol: walkAnd:)
+        walkProduction
+                walkLeftPart
+                        Token (label: walkIdentifier symbol: Alternation)
+                walkOr
+                        walkConcatenation
+                                walkEpsilon
+                                walkBuildTreeOrTokenFromName
+                                        Token (label: walkIdentifier symbol: walkEpsilon:)
+                        Token (label: walkIdentifier symbol: Concatenation)
+                        walkConcatenation
+                                walkConcatenation
+                                        Token (label: walkIdentifier symbol: Concatenation)
+                                        walkPlus
+                                                walkConcatenation
+                                                        Token (label: walkString symbol: Or)
+                                                        Token (label: walkIdentifier symbol: Concatenation)
+                                walkBuildTreeOrTokenFromName
+                                        Token (label: walkIdentifier symbol: walkOr:)
+        walkProduction
+                walkLeftPart
+                        Token (label: walkIdentifier symbol: Concatenation)
+                walkOr
+                        Token (label: walkIdentifier symbol: RepetitionOption)
+                        walkConcatenation
+                                walkConcatenation
+                                        Token (label: walkIdentifier symbol: RepetitionOption)
+                                        walkPlus
+                                                Token (label: walkIdentifier symbol: RepetitionOption)
+                                walkBuildTreeOrTokenFromName
+                                        Token (label: walkIdentifier symbol: walkConcatenation:)
+        walkProduction
+                walkLeftPart
+                        Token (label: walkIdentifier symbol: RepetitionOption)
+                walkOr
+                        Token (label: walkIdentifier symbol: Primary)
+                        walkConcatenation
+                                walkConcatenation
+                                        Token (label: walkIdentifier symbol: Primary)
+                                        Token (label: walkString symbol: Star)
+                                walkBuildTreeOrTokenFromName
+                                        Token (label: walkIdentifier symbol: walkStar:)
+                        walkConcatenation
+                                walkConcatenation
+                                        Token (label: walkIdentifier symbol: Primary)
+                                        Token (label: walkString symbol: QuestionMark)
+                                walkBuildTreeOrTokenFromName
+                                        Token (label: walkIdentifier symbol: walkQuestionMark:)
+                        walkConcatenation
+                                walkConcatenation
+                                        Token (label: walkIdentifier symbol: Primary)
+                                        Token (label: walkString symbol: Plus)
+                                walkBuildTreeOrTokenFromName
+                                        Token (label: walkIdentifier symbol: walkPlus:)
+        walkProduction
+                walkLeftPart
+                        Token (label: walkIdentifier symbol: Primary)
+                walkOr
+                        Token (label: walkIdentifier symbol: Secondary)
+                        walkConcatenation
+                                Token (label: walkIdentifier symbol: SemanticAction)
+                                walkBuildTreeOrTokenFromName
+                                        Token (label: walkIdentifier symbol: walkNonTreeBuildingSemanticAction:)
+                        walkConcatenation
+                                walkConcatenation
+                                        Token (label: walkIdentifier symbol: Secondary)
+                                        Token (label: walkString symbol: OpenSquare)
+                                        walkStar
+                                                walkAttributes
+                                                        Token (label: walkIdentifier symbol: Attribute)
+                                                        Token (label: node symbol: node)
+                                        Token (label: walkString symbol: CloseSquare)
+                                walkBuildTreeOrTokenFromName
+                                        Token (label: walkIdentifier symbol: walkAttributes:)
+        walkProduction
+                walkLeftPart
+                        Token (label: walkIdentifier symbol: Secondary)
+                walkOr
+                        walkConcatenation
+                                Token (label: walkString symbol: OpenRound)
+                                Token (label: walkIdentifier symbol: Expression)
+                                Token (label: walkString symbol: CloseRound)
+                        walkConcatenation
+                                walkConcatenation
+                                        Token (label: walkString symbol: OpenCurly)
+                                        Token (label: walkIdentifier symbol: Expression)
+                                        Token (label: walkString symbol: CloseCurly)
+                                walkBuildTreeOrTokenFromName
+                                        Token (label: walkIdentifier symbol: walkLook:)
+                        walkOr
+                                Token (label: walkIdentifier symbol: Name)
+                                Token (label: walkIdentifier symbol: Byte)
+                        walkConcatenation
+                                walkConcatenation
+                                        Token (label: walkIdentifier symbol: Byte)
+                                        Token (label: walkIdentifier symbol: DotDot)
+                                        Token (label: walkIdentifier symbol: Byte)
+                                walkBuildTreeOrTokenFromName
+                                        Token (label: walkIdentifier symbol: walkDotDot:)
+        walkProduction
+                walkLeftPart
+                        Token (label: walkIdentifier symbol: TreeBuildingOptions)
+                walkOr
+                        walkConcatenation
+                                Token (label: walkIdentifier symbol: Name)
+                                walkBuildTreeOrTokenFromName
+                                        Token (label: walkIdentifier symbol: walkBuildTreeOrTokenFromName:)
+                        walkConcatenation
+                                walkConcatenation
+                                        Token (label: walkString symbol: Minus)
+                                        walkAttributes
+                                                Token (label: walkIdentifier symbol: walkInteger:)
+                                                Token (label: node symbol: node)
+                                walkBuildTreeOrTokenFromName
+                                        Token (label: walkIdentifier symbol: walkBuildTreeFromRightIndex:)
+                        walkConcatenation
+                                walkConcatenation
+                                        walkQuestionMark
+                                                Token (label: walkString symbol: Plus)
+                                        walkAttributes
+                                                Token (label: walkIdentifier symbol: walkInteger:)
+                                                Token (label: node symbol: node)
+                                walkBuildTreeOrTokenFromName
+                                        Token (label: walkIdentifier symbol: walkBuildTreeFromLeftIndex:)
+                        walkConcatenation
+                                Token (label: walkIdentifier symbol: SemanticAction)
+                                walkBuildTreeOrTokenFromName
+                                        Token (label: walkIdentifier symbol: walkTreeBuildingSemanticAction:)
+        walkProduction
+                walkLeftPart
+                        Token (label: walkIdentifier symbol: Name)
+                walkOr
+                        walkOr
+                                walkAttributes
+                                        Token (label: walkIdentifier symbol: walkIdentifier:)
+                                        Token (label: node symbol: node)
+                                walkAttributes
+                                        Token (label: walkIdentifier symbol: walkString:)
+                                        Token (label: node symbol: node)
+        walkProduction
+                walkLeftPart
+                        Token (label: walkIdentifier symbol: Byte)
+                walkOr
+                        walkOr
+                                walkAttributes
+                                        Token (label: walkIdentifier symbol: walkCharacter:)
+                                        Token (label: node symbol: node)
+                                walkAttributes
+                                        Token (label: walkIdentifier symbol: walkInteger:)
+                                        Token (label: node symbol: node)
+        walkProduction
+                walkLeftPart
+                        Token (label: walkIdentifier symbol: SemanticAction)
+                walkOr
+                        walkConcatenation
+                                walkAttributes
+                                        Token (label: walkIdentifier symbol: walkSymbol:)
+                                        Token (label: node symbol: node)
+                                walkBuildTreeOrTokenFromName
+                                        Token (label: walkIdentifier symbol: walkSemanticAction:)
+                        walkConcatenation
+                                walkConcatenation
+                                        walkAttributes
+                                                Token (label: walkIdentifier symbol: walkSymbol:)
+                                                Token (label: node symbol: node)
+                                        Token (label: walkString symbol: OpenSquare)
+                                        walkStar
+                                                Token (label: walkIdentifier symbol: SemanticActionParameter)
+                                        Token (label: walkString symbol: CloseSquare)
+                                walkBuildTreeOrTokenFromName
+                                        Token (label: walkIdentifier symbol: walkSemanticAction:)
+        walkProduction
+                walkLeftPart
+                        Token (label: walkIdentifier symbol: SemanticActionParameter)
+                walkOr
+                        walkOr
+                                Token (label: walkIdentifier symbol: Name)
+                                Token (label: walkIdentifier symbol: Byte)
+                                walkAttributes
+                                        Token (label: walkIdentifier symbol: walkSymbol:)
+                                        Token (label: node symbol: node)
+        walkProduction
+                walkLeftPart
+                        Token (label: walkIdentifier symbol: Attribute)
+                walkOr
+                        walkAttributes
+                                walkOr
+                                        Token (label: walkString symbol: stack)
+                                        Token (label: walkString symbol: noStack)
+                                        Token (label: walkString symbol: read)
+                                        Token (label: walkString symbol: look)
+                                        Token (label: walkString symbol: node)
+                                        Token (label: walkString symbol: noNode)
+                                        Token (label: walkString symbol: keep)
+                                        Token (label: walkString symbol: noKeep)
+                                Token (label: node symbol: node))
+
+walkGrammar
+        walkProduction
+                walkLeftPartWithLookahead
+                        Token (label: walkIdentifier symbol: Grammar)
+                        Token (label: walkString symbol: -|)
+                walkOr
+                        walkConcatenation
+                                walkStar
+                                        walkConcatenation
+                                                Token (label: walkIdentifier symbol: Defaults)
+                                                walkNonTreeBuildingSemanticAction
+                                                        walkSemanticAction
+                                                                Token (label: walkSymbol symbol: processAndDiscardDefaultsNow)
+                                Token (label: walkIdentifier symbol: Rules)
+        walkProduction
+                walkLeftPart
+                        Token (label: walkIdentifier symbol: GrammarType)
+                walkOr
+                        walkConcatenation
+                                Token (label: walkString symbol: parser)
+                                walkNonTreeBuildingSemanticAction
+                                        walkSemanticAction
+                                                Token (label: walkSymbol symbol: processTypeNow:)
+                                                Token (label: walkSymbol symbol: parser)
+                        walkConcatenation
+                                Token (label: walkString symbol: scanner)
+                                walkNonTreeBuildingSemanticAction
+                                        walkSemanticAction
+                                                Token (label: walkSymbol symbol: processTypeNow:)
+                                                Token (label: walkSymbol symbol: scanner)
+                        walkConcatenation
+                                Token (label: walkString symbol: scanner)
+                                walkNonTreeBuildingSemanticAction
+                                        walkSemanticAction
+                                                Token (label: walkSymbol symbol: processTypeNow:)
+                                                Token (label: walkSymbol symbol: superScanner)
+                        walkConcatenation
+                                Token (label: walkString symbol: superScanner)
+                                walkNonTreeBuildingSemanticAction
+                                        walkSemanticAction
+                                                Token (label: walkSymbol symbol: processTypeNow:)
+                                                Token (label: walkSymbol symbol: superScanner)
+        walkProduction
+                walkLeftPart
+                        Token (label: walkIdentifier symbol: Defaults)
+                walkOr
+                        walkConcatenation
+                                walkConcatenation
+                                        walkPlus
+                                                Token (label: walkIdentifier symbol: Name)
+                                        Token (label: walkString symbol: Dot)
+                                walkBuildTreeOrTokenFromName
+                                        Token (label: walkIdentifier symbol: walkAttributeDefaults:)
+                        walkConcatenation
+                                walkConcatenation
+                                        walkPlus
+                                                Token (label: walkIdentifier symbol: Name)
+                                        Token (label: walkString symbol: Dot)
+                                walkBuildTreeOrTokenFromName
+                                        Token (label: walkIdentifier symbol: walkAttributeTerminalDefaults:)
+                        walkConcatenation
+                                walkConcatenation
+                                        walkPlus
+                                                Token (label: walkIdentifier symbol: Name)
+                                        Token (label: walkString symbol: Dot)
+                                walkBuildTreeOrTokenFromName
+                                        Token (label: walkIdentifier symbol: walkAttributeNonterminalDefaults:)
+                        walkConcatenation
+                                walkConcatenation
+                                        walkPlus
+                                                Token (label: walkIdentifier symbol: Name)
+                                        Token (label: walkString symbol: Dot)
+                                walkBuildTreeOrTokenFromName
+                                        Token (label: walkIdentifier symbol: walkKeywords:)
+                        walkConcatenation
+                                walkConcatenation
+                                        Token (label: walkIdentifier symbol: Name)
+                                        Token (label: walkString symbol: Dot)
+                                walkBuildTreeOrTokenFromName
+                                        Token (label: walkIdentifier symbol: walkOutput:)
+                        walkConcatenation
+                                walkConcatenation
+                                        Token (label: walkIdentifier symbol: Name)
+                                        Token (label: walkString symbol: Dot)
+                                walkBuildTreeOrTokenFromName
+                                        Token (label: walkIdentifier symbol: walkOptimize:)
+        walkProduction
+                walkLeftPart
+                        Token (label: walkIdentifier symbol: Rules)
+                walkOr
+                        walkConcatenation
+                                walkPlus
+                                        walkOr
+                                                Token (label: walkIdentifier symbol: Production)
+                                                Token (label: walkIdentifier symbol: Macro)
+                                walkBuildTreeOrTokenFromName
+                                        Token (label: walkIdentifier symbol: walkGrammar:)
+        walkProduction
+                walkLeftPart
+                        Token (label: walkIdentifier symbol: Macro)
+                walkOr
+                        walkConcatenation
+                                walkConcatenation
+                                        Token (label: walkIdentifier symbol: Expression)
+                                        Token (label: walkString symbol: Dot)
+                                walkBuildTreeOrTokenFromName
+                                        Token (label: walkIdentifier symbol: walkMacro:)
+        walkProduction
+                walkLeftPart
+                        Token (label: walkIdentifier symbol: Production)
+                walkOr
+                        walkConcatenation
+                                walkConcatenation
+                                        Token (label: walkIdentifier symbol: RightParts)
+                                        Token (label: walkString symbol: Dot)
+                                walkBuildTreeOrTokenFromName
+                                        Token (label: walkIdentifier symbol: walkProduction:)
+        walkProduction
+                walkLeftPart
+                        Token (label: walkIdentifier symbol: LeftPart)
+                walkOr
+                        walkConcatenation
+                                Token (label: walkIdentifier symbol: Name)
+                                walkBuildTreeOrTokenFromName
+                                        Token (label: walkIdentifier symbol: walkLeftPart:)
+                        walkConcatenation
+                                walkConcatenation
+                                        Token (label: walkIdentifier symbol: Expression)
+                                        Token (label: walkString symbol: CloseCurly)
+                                walkBuildTreeOrTokenFromName
+                                        Token (label: walkIdentifier symbol: walkLeftPartWithLookahead:)
+        walkProduction
+                walkLeftPart
+                        Token (label: walkIdentifier symbol: RightParts)
+                walkOr
+                        walkConcatenation
+                                walkPlus
+                                        Token (label: walkIdentifier symbol: RightPart)
+                                walkBuildTreeOrTokenFromName
+                                        Token (label: walkIdentifier symbol: walkOr:)
+        walkProduction
+                walkLeftPart
+                        Token (label: walkIdentifier symbol: RightPart)
+                walkOr
+                        walkConcatenation
+                                Token (label: walkString symbol: RightArrow)
+                                Token (label: walkIdentifier symbol: Expression)
+                        walkConcatenation
+                                walkConcatenation
+                                        Token (label: walkString symbol: FatRightArrow)
+                                        Token (label: walkIdentifier symbol: TreeBuildingOptions)
+                                walkBuildTreeOrTokenFromName
+                                        Token (label: walkIdentifier symbol: walkConcatenation:)
+        walkProduction
+                walkLeftPart
+                        Token (label: walkIdentifier symbol: Expression)
+                walkOr
+                        Token (label: walkIdentifier symbol: AndExpression)
+                        walkConcatenation
+                                walkConcatenation
+                                        Token (label: walkString symbol: Minus)
+                                        Token (label: walkIdentifier symbol: AndExpression)
+                                walkBuildTreeOrTokenFromName
+                                        Token (label: walkIdentifier symbol: walkMinus:)
+        walkProduction
+                walkLeftPart
+                        Token (label: walkIdentifier symbol: AndExpression)
+                walkOr
+                        Token (label: walkIdentifier symbol: Alternation)
+                        walkConcatenation
+                                walkConcatenation
+                                        Token (label: walkString symbol: And)
+                                        Token (label: walkIdentifier symbol: Alternation)
+                                walkBuildTreeOrTokenFromName
+                                        Token (label: walkIdentifier symbol: walkAnd:)
+        walkProduction
+                walkLeftPart
+                        Token (label: walkIdentifier symbol: Alternation)
+                walkOr
+                        walkConcatenation
+                                walkEpsilon
+                                walkBuildTreeOrTokenFromName
+                                        Token (label: walkIdentifier symbol: walkEpsilon:)
+                        Token (label: walkIdentifier symbol: Concatenation)
+                        walkConcatenation
+                                walkConcatenation
+                                        Token (label: walkIdentifier symbol: Concatenation)
+                                        walkPlus
+                                                walkConcatenation
+                                                        Token (label: walkString symbol: Or)
+                                                        Token (label: walkIdentifier symbol: Concatenation)
+                                walkBuildTreeOrTokenFromName
+                                        Token (label: walkIdentifier symbol: walkOr:)
+        walkProduction
+                walkLeftPart
+                        Token (label: walkIdentifier symbol: Concatenation)
+                walkOr
+                        Token (label: walkIdentifier symbol: RepetitionOption)
+                        walkConcatenation
+                                walkConcatenation
+                                        Token (label: walkIdentifier symbol: RepetitionOption)
+                                        walkPlus
+                                                Token (label: walkIdentifier symbol: RepetitionOption)
+                                walkBuildTreeOrTokenFromName
+                                        Token (label: walkIdentifier symbol: walkConcatenation:)
+        walkProduction
+                walkLeftPart
+                        Token (label: walkIdentifier symbol: RepetitionOption)
+                walkOr
+                        Token (label: walkIdentifier symbol: Primary)
+                        walkConcatenation
+                                walkConcatenation
+                                        Token (label: walkIdentifier symbol: Primary)
+                                        Token (label: walkString symbol: Star)
+                                walkBuildTreeOrTokenFromName
+                                        Token (label: walkIdentifier symbol: walkStar:)
+                        walkConcatenation
+                                walkConcatenation
+                                        Token (label: walkIdentifier symbol: Primary)
+                                        Token (label: walkString symbol: QuestionMark)
+                                walkBuildTreeOrTokenFromName
+                                        Token (label: walkIdentifier symbol: walkQuestionMark:)
+                        walkConcatenation
+                                walkConcatenation
+                                        Token (label: walkIdentifier symbol: Primary)
+                                        Token (label: walkString symbol: Plus)
+                                walkBuildTreeOrTokenFromName
+                                        Token (label: walkIdentifier symbol: walkPlus:)
+        walkProduction
+                walkLeftPart
+                        Token (label: walkIdentifier symbol: Primary)
+                walkOr
+                        Token (label: walkIdentifier symbol: Secondary)
+                        walkConcatenation
+                                Token (label: walkIdentifier symbol: SemanticAction)
+                                walkBuildTreeOrTokenFromName
+                                        Token (label: walkIdentifier symbol: walkNonTreeBuildingSemanticAction:)
+                        walkConcatenation
+                                walkConcatenation
+                                        walkStar
+                                                walkAttributes
+                                                        Token (label: walkIdentifier symbol: Attribute)
+                                                        Token (label: node symbol: node)
+                                        Token (label: walkString symbol: CloseSquare)
+                                walkBuildTreeOrTokenFromName
+                                        Token (label: walkIdentifier symbol: walkAttributes:)
+        walkProduction
+                walkLeftPart
+                        Token (label: walkIdentifier symbol: Secondary)
+                walkOr
+                        walkConcatenation
+                                Token (label: walkIdentifier symbol: Expression)
+                                Token (label: walkString symbol: CloseRound)
+                        walkConcatenation
+                                walkConcatenation
+                                        Token (label: walkIdentifier symbol: Expression)
+                                        Token (label: walkString symbol: CloseCurly)
+                                walkBuildTreeOrTokenFromName
+                                        Token (label: walkIdentifier symbol: walkLook:)
+                        walkOr
+                                Token (label: walkIdentifier symbol: Name)
+                                Token (label: walkIdentifier symbol: Byte)
+                        walkConcatenation
+                                walkConcatenation
+                                        Token (label: walkIdentifier symbol: DotDot)
+                                        Token (label: walkIdentifier symbol: Byte)
+                                walkBuildTreeOrTokenFromName
+                                        Token (label: walkIdentifier symbol: walkDotDot:)
+        walkProduction
+                walkLeftPart
+                        Token (label: walkIdentifier symbol: TreeBuildingOptions)
+                walkOr
+                        walkConcatenation
+                                Token (label: walkIdentifier symbol: Name)
+                                walkBuildTreeOrTokenFromName
+                                        Token (label: walkIdentifier symbol: walkBuildTreeOrTokenFromName:)
+                        walkConcatenation
+                                walkConcatenation
+                                        Token (label: walkString symbol: Minus)
+                                        walkAttributes
+                                                Token (label: walkIdentifier symbol: walkInteger:)
+                                                Token (label: node symbol: node)
+                                walkBuildTreeOrTokenFromName
+                                        Token (label: walkIdentifier symbol: walkBuildTreeFromRightIndex:)
+                        walkConcatenation
+                                walkConcatenation
+                                        walkQuestionMark
+                                                Token (label: walkString symbol: Plus)
+                                        walkAttributes
+                                                Token (label: walkIdentifier symbol: walkInteger:)
+                                                Token (label: node symbol: node)
+                                walkBuildTreeOrTokenFromName
+                                        Token (label: walkIdentifier symbol: walkBuildTreeFromLeftIndex:)
+                        walkConcatenation
+                                Token (label: walkIdentifier symbol: SemanticAction)
+                                walkBuildTreeOrTokenFromName
+                                        Token (label: walkIdentifier symbol: walkTreeBuildingSemanticAction:)
+        walkProduction
+                walkLeftPart
+                        Token (label: walkIdentifier symbol: Name)
+                walkOr
+                        walkOr
+                                walkAttributes
+                                        Token (label: walkIdentifier symbol: walkIdentifier:)
+                                        Token (label: node symbol: node)
+                                walkAttributes
+                                        Token (label: walkIdentifier symbol: walkString:)
+                                        Token (label: node symbol: node)
+        walkProduction
+                walkLeftPart
+                        Token (label: walkIdentifier symbol: Byte)
+                walkOr
+                        walkOr
+                                walkAttributes
+                                        Token (label: walkIdentifier symbol: walkCharacter:)
+                                        Token (label: node symbol: node)
+                                walkAttributes
+                                        Token (label: walkIdentifier symbol: walkInteger:)
+                                        Token (label: node symbol: node)
+        walkProduction
+                walkLeftPart
+                        Token (label: walkIdentifier symbol: SemanticAction)
+                walkOr
+                        walkConcatenation
+                                walkAttributes
+                                        Token (label: walkIdentifier symbol: walkSymbol:)
+                                        Token (label: node symbol: node)
+                                walkBuildTreeOrTokenFromName
+                                        Token (label: walkIdentifier symbol: walkSemanticAction:)
+                        walkConcatenation
+                                walkConcatenation
+                                        walkStar
+                                                Token (label: walkIdentifier symbol: SemanticActionParameter)
+                                        Token (label: walkString symbol: CloseSquare)
+                                walkBuildTreeOrTokenFromName
+                                        Token (label: walkIdentifier symbol: walkSemanticAction:)
+        walkProduction
+                walkLeftPart
+                        Token (label: walkIdentifier symbol: SemanticActionParameter)
+                walkOr
+                        walkOr
+                                Token (label: walkIdentifier symbol: Byte)
+                                walkAttributes
+                                        Token (label: walkIdentifier symbol: walkSymbol:)
+                                        Token (label: node symbol: node)
+        walkProduction
+                walkLeftPart
+                        Token (label: walkIdentifier symbol: Attribute)
+                walkOr
+                        walkAttributes
+                                walkOr
+                                        Token (label: walkString symbol: keep)
+                                        Token (label: walkString symbol: noKeep)
+                                Token (label: node symbol: node))

@@ -671,7 +671,7 @@ public class Label: Relatable, Comparable {
     var parameters: [AnyHashable] = []
     var isRootBuilding: Bool = false
     var predecessor: FiniteStateMachineState?
-    var isPrintable: Bool = true
+    var isPrintable: Bool = false
 
     convenience init(name: String) {
         self.init(name: name, printable: true)
