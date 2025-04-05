@@ -163,8 +163,24 @@ class Grammar: CustomStringConvertible {
         var i = 0
         while i < result.count {
             let state = result[i]
-            for transition in state.transitions {
-                if isETransitionLabel(transition.label) { result.appendIfAbsent(transition.goto) }
+            state.transitionsDo {
+                if isETransitionLabel($0.label){ result.appendIfAbsent($0.goto) }
+            }
+            i += 1
+        }
+        return result
+    }
+
+    func eSuccessors(_ raStates: [ReadaheadState]) -> [ReadaheadState] {
+        //Revised by Eric Leblanc.
+        var result: [ReadaheadState] = []
+        for state in raStates { result.append(state) }
+        //for state in result {//Swift won't allow state to encounter results that were recently added.
+        var i = 0
+        while i < result.count {
+            let state = result[i]
+            state.transitionsDo {
+                if isETransitionLabel($0.label) && $0.goto as? ReadaheadState != nil{ result.appendIfAbsent($0.goto as! ReadaheadState) }
             }
             i += 1
         }
@@ -298,11 +314,9 @@ class Grammar: CustomStringConvertible {
                 }
             }
 
-            if $0 as? ReadaheadState != nil {
-                let finals = ($0 as! ReadaheadState).items.filter { state in state.isFinal }
-                finals.map { state in state.leftPart }.do { nonterminal in
-                    return_val.appendIfAbsent(productionFor(nonterminal).followSet)
-                }
+            let finals = ($0 as! ReadaheadState).items.filter { state in state.isFinal }
+            finals.map { state in state.leftPart }.do { nonterminal in
+                return_val.appendIfAbsent(productionFor(nonterminal).followSet)
             }
         }
 

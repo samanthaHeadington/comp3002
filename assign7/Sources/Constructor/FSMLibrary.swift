@@ -33,8 +33,8 @@ public class FiniteStateMachine: CustomStringConvertible {
         renumber()
     }
 
-    func transitionsDo(_ operation: (inout Transition) -> Transition){
-        states.do(){
+    func transitionsDo(_ operation: (inout Transition) -> Transition) {
+        states.do {
             $0.transitionsDo { transition in
                 operation(&transition)
             }
@@ -301,9 +301,14 @@ public class FiniteStateMachine: CustomStringConvertible {
     }
 
     static func forInteger(_ integer: Int) -> FiniteStateMachine {
-        return fromTransition(
-            Transition(
-                name: intAsString(integer)))
+        if integer < 33 || integer > 126 {
+            return fromTransition(
+                Transition(label: Label(name: intAsString(integer), printable: false)))
+        } else {
+            return fromTransition(
+                Transition(
+                    name: intAsString(integer)))
+        }
     }
 
     static func forDotDot(_ start: Int, _ end: Int) -> FiniteStateMachine {
@@ -454,17 +459,17 @@ public class ReadbackState: FiniteStateMachineState {
     }
 }
 
-public class ShiftState: FiniteStateMachineState{
+public class ShiftState: FiniteStateMachineState {
     var shiftVal: Int
     var goto: FiniteStateMachineState
 
-    init(_ shiftVal: Int, _ goto: FiniteStateMachineState){
+    init(_ shiftVal: Int, _ goto: FiniteStateMachineState) {
         self.shiftVal = shiftVal
         self.goto = goto
         super.init()
     }
 
-    override public var terseDescription: String{
+    override public var terseDescription: String {
         return "Shift \(stateNumber) by \(shiftVal), goto \(goto.stateNumber)"
     }
 }
@@ -478,8 +483,8 @@ public class ReduceState: FiniteStateMachineState {
         super.init()
     }
 
-    override public var terseDescription: String{
-        return "Reduce to \(nonterminal)"//: (\(restarts.map{"\($0.key): [\($0.value.map{state in "\(state.terseDescription)"}.joined(separator: ", "))]"}))"
+    override public var terseDescription: String {
+        return "Reduce to \(nonterminal)"  //: (\(restarts.map{"\($0.key): [\($0.value.map{state in "\(state.terseDescription)"}.joined(separator: ", "))]"}))"
     }
 
 }
@@ -664,10 +669,16 @@ public class Label: Relatable, Comparable {
     var parameters: [AnyHashable] = []
     var isRootBuilding: Bool = false
     var predecessor: FiniteStateMachineState?
+    var isPrintable: Bool = true
 
-    init(name: String) {
+    convenience init(name: String) {
+        self.init(name: name, printable: true)
+    }
+
+    init(name: String, printable: Bool) {
         self.name = name
         attributes = AttributeList(attributes: Grammar.defaultsFor(String(name)))
+        self.isPrintable = printable
     }
 
     init(label: Label, predecessor: FiniteStateMachineState?) {
@@ -676,6 +687,7 @@ public class Label: Relatable, Comparable {
         action = label.action
         parameters.append(contentsOf: label.parameters)
         isRootBuilding = label.isRootBuilding
+        isPrintable = label.isPrintable
         if predecessor != nil {
             self.predecessor = predecessor
         } else {
@@ -703,12 +715,14 @@ public class Label: Relatable, Comparable {
         hasher.combine(attributes)
         hasher.combine(parameters)
         hasher.combine(isRootBuilding)
+        hasher.combine(isPrintable)
     }
 
     func hasAttributes() -> Bool { return name != nil }
     func hasAction() -> Bool { return action != "" }
     func isVisible() -> Bool { return hasAttributes() && attributes.isRead }
-    func isInvisible() -> Bool {return hasAction() || !attributes.isRead}
+    func isInvisible() -> Bool { return hasAction() || !attributes.isRead }
+    func printable() -> Bool { return isPrintable }
 
     func contents() -> Any {
         return (hasAction()) ? parameters : attributes
@@ -736,6 +750,7 @@ public class Label: Relatable, Comparable {
         return lhs.name == rhs.name && lhs.attributes == rhs.attributes
             && rhs.action == lhs.action
             && lhs.isRootBuilding == rhs.isRootBuilding
+            && lhs.isPrintable == rhs.isPrintable
             && Set(lhs.parameters) == Set(rhs.parameters)
     }
 }

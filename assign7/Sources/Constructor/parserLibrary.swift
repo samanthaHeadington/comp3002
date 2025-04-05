@@ -751,8 +751,9 @@ public final class Parser: Transducer {
         while table.tableType != .AcceptTable {
             print(table)
             print(scanner.peekToken())
-            print(index)
-            print(i)
+            print("Table index: \(index)")
+            print("RemoveCount: \(right - left + 1)")
+            print("Tables walked: \(i)\n")
             i += 1
 
             // if i == 20{break}
