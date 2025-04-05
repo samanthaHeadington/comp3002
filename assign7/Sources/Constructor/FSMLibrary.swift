@@ -433,29 +433,31 @@ public class FiniteStateMachineState: Relatable {
 }
 
 public class ReadaheadState: FiniteStateMachineState {
-    var items: [FiniteStateMachineState]
+    var initialItems: [FiniteStateMachineState]
+    var items: [FiniteStateMachineState] = []
 
-    public init(_ items: [FiniteStateMachineState]) {
-        self.items = items
+    public init(_ initialItems: [FiniteStateMachineState]) {
+        self.initialItems = initialItems
         super.init()
     }
 
     override public var terseDescription: String {
-        return "ReadaheadState \(stateNumber) \(items.map{$0.stateNumber})"
+        return "ReadaheadState \(stateNumber) \(initialItems.map{$0.stateNumber})"
     }
 }
 
 public class ReadbackState: FiniteStateMachineState {
+    var initialItems: [Pair] = []
     var items: [Pair] = []
 
-    public init(items: [Pair]) {
-        self.items.append(contentsOf: items)
+    public init(initialItems: [Pair]) {
+        self.initialItems.append(contentsOf: initialItems)
         super.init()
     }
 
     override public var terseDescription: String {
         return
-            "Readback \(stateNumber) \(items.map{"(\(($0.first() as! FiniteStateMachineState).stateNumber), ReadaheadState \(($0.second() as! FiniteStateMachineState).stateNumber))"})"
+            "Readback \(stateNumber) \(initialItems.map{"(\(($0.first() as! FiniteStateMachineState).stateNumber), ReadaheadState \(($0.second() as! FiniteStateMachineState).stateNumber))"})"
     }
 }
 

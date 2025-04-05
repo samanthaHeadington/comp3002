@@ -366,7 +366,7 @@ public final class Constructor: Translator {
 
         while i < readaheadStates.count {
             let raState = readaheadStates[i]
-            let localDown = down.performRelationStar(raState.items)
+            let localDown = down.performRelationStar(raState.initialItems)
 
             // print("\n\n    ~~~~~ \(i) ~~~~~    \n\n")
 
@@ -374,6 +374,7 @@ public final class Constructor: Translator {
                 up.add(Pair($2, raState), and: $1, and: Pair($0, raState))
             }
 
+            raState.items.append(contentsOf: raState.initialItems)
             raState.items.append(contentsOf: localDown.allTo())
 
             // print("\(i), \(localDown)\n")
@@ -383,7 +384,7 @@ public final class Constructor: Translator {
                 // print(localRight.allTo())
                 let candidate = ReadaheadState(localRight.allTo())
                 var successor = readaheadStates.first {
-                    Set($0.items).contains(candidate.items)
+                    Set($0.initialItems).contains(candidate.initialItems)
                 }
                 //print(candidate)
                 if successor == nil {
@@ -425,7 +426,7 @@ public final class Constructor: Translator {
                     new_state = acceptState
                 } else {
                     new_state = ReadbackState(
-                        items: finalItems.map {
+                        initialItems: finalItems.map {
                             Pair($0, raState)
                         })
 
@@ -451,13 +452,15 @@ public final class Constructor: Translator {
         var i = 0
         while i < readbackStates.count {
             let rbState: ReadbackState = readbackStates[i]
-            let more_items = invisible_left.performStar(rbState.items)
+            let more_items = invisible_left.performStar(rbState.initialItems)
 
-            visible_left.from(more_items) { Mp, local_left in
-                let candidate = ReadbackState(items: local_left.allTo())
+            rbState.items.append(contentsOf: more_items)
+
+            visible_left.from(rbState.items) { Mp, local_left in
+                let candidate = ReadbackState(initialItems: local_left.allTo())
                 // print(candidate)
                 var successor = readbackStates.first {
-                    $0.items.elementsEquivalent(candidate.items)
+                    $0.initialItems.elementsEquivalent(candidate.initialItems)
                 }
                 if successor == nil {
                     readbackStates.append(candidate)
@@ -633,8 +636,8 @@ public final class Constructor: Translator {
     }
 
     func optimize() {
-        // eliminateStates()
-        // readbackToShift()
+        eliminateStates()
+        readbackToShift()
     }
 
     func eliminateStates() {
@@ -1303,7 +1306,7 @@ public final class Constructor: Translator {
             ],
         ]
 
-    var parserTables: [Any] =
+    var parserrTables: [Any] =
         [
             [
                 "keywords", "stack", "noStack", "read", "look", "node", "noNode", "keep", "noKeep",
