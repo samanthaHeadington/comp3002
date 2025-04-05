@@ -746,10 +746,16 @@ public final class Parser: Transducer {
         scanner.scanTokens(text)
         var index: Int = 1
         var table = tables[index]!
+        var i = 1
             
         while table.tableType != .AcceptTable {
             print(table)
+            print(scanner.peekToken())
             print(index)
+            print(i)
+            i += 1
+
+            // if i == 20{break}
 
             do {
                 debug("Parser \(table.tableType) #\(index) is running...\n")
@@ -766,6 +772,8 @@ public final class Parser: Transducer {
                 print("Syntax error : Bad index")
                 break
             }
+
+            // if i == 265{break}
         }
             
         return treeStack.last!

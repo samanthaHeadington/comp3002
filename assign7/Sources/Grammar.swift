@@ -299,7 +299,7 @@ class Grammar: CustomStringConvertible {
             }
 
             if $0 as? ReadaheadState != nil {
-                let finals = ($0 as! ReadaheadState).items.filter { state in state.isFinal }
+                let finals = ($0 as! ReadaheadState).initialItems.filter { state in state.isFinal }
                 finals.map { state in state.leftPart }.do { nonterminal in
                     return_val.appendIfAbsent(productionFor(nonterminal).followSet)
                 }

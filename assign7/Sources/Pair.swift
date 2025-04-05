@@ -102,7 +102,7 @@ public class Pair : Relatable {
 
     func isVisible () -> Bool {
        //Semantic actions and look transitions are invisible; otherwise visible.
-       if (isLabelPair ()) {error ("State pairs cannot be visible/invisible")}
+       if (!isLabelPair ()) {error ("State pairs cannot be visible/invisible")}
        let label = item1 as! Label
        if (label.hasAction ()) {return false}
        //So if its not an action, it's a symbol with attributes.

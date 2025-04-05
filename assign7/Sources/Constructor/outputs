@@ -1,78 +1,65 @@
+Token (label: walkIdentifier symbol: parser)
+1
+1
 assign7.ReadaheadTable
-23
-assign7.ReadaheadTable
-9
-assign7.ShiftbackTable
-69
-assign7.ReduceTable
-126
-Looking for 9 + Name -> ?
-assign7.ReadaheadTable
-19
-assign7.ShiftbackTable
-89
+Token (label: walkIdentifier symbol: attribute)
+4
+2
 assign7.SemanticTable
-150
-assign7.ReduceTable
-127
-Looking for 175 + Defaults -> ?
-assign7.SemanticTable
-175
-processAndDiscardDefaultsNow
-[]
-walkOutput
-[
-walkOutput
-        Token (label: walkString symbol: All)]
+Token (label: walkIdentifier symbol: attribute)
+362
+3
+processTypeNow
+["parser"]
 assign7.ReadaheadTable
-23
-assign7.ShiftbackTable
-69
+Token (label: walkIdentifier symbol: attribute)
+20
+4
+assign7.ReadbackTable
+Token (label: walkIdentifier symbol: attribute)
+148
+5
+ParserPair<String, Int>(first: "parser", second: 4)
+assign7.ReadbackTable
+Token (label: walkIdentifier symbol: attribute)
+214
+6
+ParserPair<String, Int>(first: "|-", second: 1)
 assign7.ReduceTable
-126
-Looking for 175 + Name -> ?
+Token (label: walkIdentifier symbol: attribute)
+359
+7
+Looking for 1 + GrammarType -> ?
 assign7.ReadaheadTable
+Token (label: walkIdentifier symbol: attribute)
+2
 8
 assign7.ReadaheadTable
-17
-assign7.ShiftbackTable
-69
-assign7.ReduceTable
-126
-Looking for 17 + Name -> ?
-assign7.ShiftbackTable
-79
-assign7.ReduceTable
-138
-Looking for 17 + Secondary -> ?
+Token (label: walkIdentifier symbol: terminal)
+13
+9
 assign7.ReadaheadTable
-30
-assign7.ShiftbackTable
-78
-assign7.ReduceTable
-135
-Looking for 17 + Primary -> ?
+Token (label: walkIdentifier symbol: defaults)
+34
+10
 assign7.ReadaheadTable
-28
-assign7.ShiftbackTable
-76
-assign7.ReduceTable
-125
-Looking for 17 + RepetitionOption -> ?
+Token (label: walkString symbol: stack)
+65
+11
 assign7.ReadaheadTable
-36
-assign7.ShiftbackTable
-82
-assign7.ReduceTable
-122
-Looking for 17 + Concatenation -> ?
-assign7.ReadaheadTable
-35
-assign7.ShiftbackTable
-81
-assign7.ReduceTable
-137
-Optional(Token (label: walkString symbol: -|))
-
-("And", "L", 144), ("Minus", "L", 144), ("CloseCurly", "L", 144), ("Dot", "L", 144), ("CloseRound", "L", 144), ("FatRightArrow", "L", 144), ("RightArrow", "L", 144)
-("And", "L", 157), ("CloseCurly", "L", 157), ("Dot", "L", 157), ("CloseRound", "L", 157), ("Minus", "L", 157), ("RightArrow", "L", 157), ("FatRightArrow", "L", 157), ("parser", "L", 157), ("scanner", "L", 157), ("super", "L", 157), ("superScanner", "L", 157), ("walkIdentifier", "L", 157), ("walkString", "L", 157), ("OpenRound", "L", 157), ("OpenCurly", "L", 157), ("walkCharacter", "L", 157), ("walkInteger", "L", 157), ("walkSymbol", "L", 157), ("|-", "L", 157), ("attribute", "L", 157), ("keywords", "L", 157), ("output", "L", 157), ("optimize", "L", 157), ("Or", "L", 157), ("Equals", "L", 157)
+Token (label: walkString symbol: read)
+16
+12
+assign7.ReadbackTable
+Token (label: walkString symbol: read)
+147
+13
+ParserPair<String, Int>(first: "walkString", second: 16)
+assign7.ReadbackTable
+Token (label: walkString symbol: read)
+213
+14
+ParserPair<String, Int>(first: "defaults", second: 65)
+Syntax error : Table run failed
+Optional(Token (label: walkString symbol: stack))
+Done
