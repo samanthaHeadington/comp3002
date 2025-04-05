@@ -428,31 +428,29 @@ public class FiniteStateMachineState: Relatable {
 }
 
 public class ReadaheadState: FiniteStateMachineState {
-    var initialItems: [FiniteStateMachineState]
-    var items: [FiniteStateMachineState] = []
+    var items: [FiniteStateMachineState]
 
     public init(_ items: [FiniteStateMachineState]) {
-        self.initialItems = items
+        self.items = items
         super.init()
     }
 
     override public var terseDescription: String {
-        return "ReadaheadState \(stateNumber) \(initialItems.map{$0.stateNumber})"
+        return "ReadaheadState \(stateNumber) \(items.map{$0.stateNumber})"
     }
 }
 
 public class ReadbackState: FiniteStateMachineState {
-    var initialItems: [Pair] = []
     var items: [Pair] = []
 
     public init(items: [Pair]) {
-        self.initialItems.append(contentsOf: items)
+        self.items.append(contentsOf: items)
         super.init()
     }
 
     override public var terseDescription: String {
         return
-            "Readback \(stateNumber) \(initialItems.map{"(\(($0.first() as! FiniteStateMachineState).stateNumber), ReadaheadState \(($0.second() as! FiniteStateMachineState).stateNumber))"})"
+            "Readback \(stateNumber) \(items.map{"(\(($0.first() as! FiniteStateMachineState).stateNumber), ReadaheadState \(($0.second() as! FiniteStateMachineState).stateNumber))"})"
     }
 }
 
@@ -721,7 +719,7 @@ public class Label: Relatable, Comparable {
 
     func asLook() -> Label {
         let new_label = Label(label: self)
-        new_label.attributes.set (["look", "noStack", "noKeep", "noNode"])
+        new_label.attributes.override(["look"])
         return new_label
     }
 
