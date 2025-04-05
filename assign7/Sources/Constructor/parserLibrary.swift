@@ -448,12 +448,10 @@ class ReduceTable: Table, TableWithTransitionsWithIntKey {
         parser.treeStack.removeLast(removeCount)
 
         // self implemented hack (seems to allow bootstrapping?)
-        var i = 0
         while self.transitions[parser.tableNumberStack.last!] == nil{
             parser.tokenStack.removeLast()
             parser.tableNumberStack.removeLast()
             parser.treeStack.removeLast()
-            i += 1
         }
             
         // Use the top table number on the stack (`from table #`) and locate the pair (attr, `to table #`)
