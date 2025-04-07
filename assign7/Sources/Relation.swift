@@ -106,16 +106,14 @@ class Relation<Item: Relatable, Relationship: Relatable>: CustomStringConvertibl
         }
     }
 
-    func invert() {
-        for var triple in triples {
-            triples.remove(triple)
+    func invert() -> Relation<Item, Relationship> {
+        let result: Relation<Item, Relationship> = Relation<Item, Relationship>()
 
-            let tmp = triple.from
-            triple.from = triple.to
-            triple.to = tmp
-
-            triples.insert(triple)
+        for triple in triples {
+            result.add(triple.to, and: triple.relationship, and: triple.from)
         }
+        
+        return result
     }
 
     func allFrom() -> [Item] {

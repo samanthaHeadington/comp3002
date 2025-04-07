@@ -113,6 +113,15 @@ public class FiniteStateMachine: CustomStringConvertible {
         let lhs_recognizes_e = lhs.canRecognizeE()
         let rhs_recognizes_e = rhs.canRecognizeE()
 
+        print(lhs)
+        print(lhs_recognizes_e)
+
+        print()
+
+        print(rhs)
+        print(rhs_recognizes_e)
+        print()
+
         for rhs_i_state in rhs.states where rhs_i_state.isInitial {
             for lhs_f_state in lhs.states where lhs_f_state.isFinal {
                 lhs_f_state.addTransitions(rhs_i_state.transitions)
@@ -137,23 +146,24 @@ public class FiniteStateMachine: CustomStringConvertible {
 
         lhs.reduce()
 
+        print(lhs)
+
         return lhs
     }
 
     func reduce() {
-        renumber()  // this function will fail if there are duplicate state numbers, so they're renumbered here for safety
-
-        var as_relation = Relation<Int, String>(from: getAsTriples())
+        let as_relation = Relation<FiniteStateMachineState, Label>(from: getAsTriples())
 
         let reachable_from_initial = as_relation.performStar(
-            states.filter { $0.isInitial }.map { $0.stateNumber })
+            states.filter { $0.isInitial })
 
-        as_relation.invert()
+        print(reachable_from_initial)
 
-        let can_reach_final = as_relation.performStar(
-            states.filter { $0.isFinal }.map { $0.stateNumber })
+        let can_reach_final: [FiniteStateMachineState] = as_relation.invert().performStar(states.filter { $0.isFinal })
 
-        let is_useful_state: [Bool] = states.map { $0.stateNumber }.map {
+        print(can_reach_final)
+
+        let is_useful_state: [Bool] = states.map {
             can_reach_final.contains($0) && reachable_from_initial.contains($0)
         }
 
@@ -174,22 +184,29 @@ public class FiniteStateMachine: CustomStringConvertible {
         renumber()
     }
 
-    func transitionNames() -> [String] {
+    func printableTransitionNames() -> [String] {
         var return_val: [String] = []
-        states.do {
-            $0.transitions.do { transition in
-                return_val.append(transition.label.terseDescription)
-            }
+        states.do {state in
+            return_val.append(contentsOf: state.transitions.filter{$0.label.printable()}.map{$0.label.terseDescription})
         }
 
         return return_val
     }
 
-    func getAsTriples() -> [(Int, String, Int)] {
-        var return_val: [(Int, String, Int)] = []
+    func unprintableTransitionNames() -> [String] {
+        var return_val: [String] = []
+        states.do {state in
+            return_val.append(contentsOf: state.transitions.filter{!$0.label.printable()}.map{$0.label.terseDescription})
+        }
+
+        return return_val
+    }
+
+    func getAsTriples() -> [(FiniteStateMachineState, Label, FiniteStateMachineState)]{
+        var return_val: [(FiniteStateMachineState, Label, FiniteStateMachineState)] = []
 
         for state in states {
-            state.getAsTriples(&return_val)
+            return_val.append(contentsOf: state.getAsTriples())
         }
 
         return return_val
@@ -295,26 +312,20 @@ public class FiniteStateMachine: CustomStringConvertible {
         return fromTransition(Transition(name: String(character)))
     }
 
-    private static func intAsString(_ integer: Int) -> String {
-        return (integer > 32 && integer < 127)
-            ? String(Character(UnicodeScalar(integer)!)) : String(integer)
-    }
+    // private static func intAsString(_ integer: Int) -> String {
+    //     return (integer > 32 && integer < 127)
+    //         ? String(Character(UnicodeScalar(integer)!)) : String(integer)
+    // }
 
     static func forInteger(_ integer: Int) -> FiniteStateMachine {
-        if integer < 33 || integer > 126 {
-            return fromTransition(
-                Transition(label: Label(name: intAsString(integer), printable: false)))
-        } else {
-            return fromTransition(
-                Transition(
-                    name: intAsString(integer)))
-        }
+        return fromTransition(
+                Transition(label: Label(name: String(integer), printable: false)))
     }
 
     static func forDotDot(_ start: Int, _ end: Int) -> FiniteStateMachine {
         var dotdot_string = ""
         for i in start...end {
-            dotdot_string.append(intAsString(i))
+            dotdot_string.append(String(i))
         }
         return forString(dotdot_string)
     }
@@ -403,10 +414,12 @@ public class FiniteStateMachineState: Relatable {
         transitions.appendIfAbsent(transition)
     }
 
-    func getAsTriples(_ arr: inout [(Int, String, Int)]) {
+    func getAsTriples() -> [(FiniteStateMachineState, Label, FiniteStateMachineState)] {
+        var return_val: [(FiniteStateMachineState, Label, FiniteStateMachineState)] = []
         for transition in transitions {
-            arr.append((stateNumber, transition.description, transition.goto.stateNumber))
+            return_val.append((self, transition.label, transition.goto))
         }
+        return return_val
     }
 
     func getSuccessor(_ label: Label) -> Set<FiniteStateMachineState> {
@@ -671,7 +684,7 @@ public class Label: Relatable, Comparable {
     var parameters: [AnyHashable] = []
     var isRootBuilding: Bool = false
     var predecessor: FiniteStateMachineState?
-    var isPrintable: Bool = false
+    var isPrintable: Bool = true
 
     convenience init(name: String) {
         self.init(name: name, printable: true)
@@ -718,6 +731,7 @@ public class Label: Relatable, Comparable {
         hasher.combine(parameters)
         hasher.combine(isRootBuilding)
         hasher.combine(isPrintable)
+        hasher.combine(predecessor)
     }
 
     func hasAttributes() -> Bool { return name != nil }
@@ -753,6 +767,7 @@ public class Label: Relatable, Comparable {
             && rhs.action == lhs.action
             && lhs.isRootBuilding == rhs.isRootBuilding
             && lhs.isPrintable == rhs.isPrintable
+            && lhs.predecessor == rhs.predecessor
             && Set(lhs.parameters) == Set(rhs.parameters)
     }
 }
@@ -797,8 +812,8 @@ public class AttributeList: CustomStringConvertible, Hashable {
     }
 
     public var description: String {
-        if !isRead { return "L" }
-        return ("R") + (isStack ? "S" : "") + (isKeep ? "K" : "") + (isNode ? "N" : "")
+        if !isRead && Grammar.activeGrammar!.isParser() { return "L" }
+        return  (isRead ? "R" : "L") + (isStack ? "S" : "") + (isKeep ? "K" : "") + (isNode ? "N" : "")
     }
 
     public func hash(into hasher: inout Hasher) {

@@ -202,7 +202,7 @@ class ScannerReadaheadTable: Table, TableWithTransitionsWithIntKey {
             character == nil
             ? 256
             : Int(character!.asciiValue!); debug("\t\t with ascii `\(String (describing: charAsInt))`")
-        let pair = transitions[charAsInt]; debug("\t\t transition for \(String (describing: charAsInt)) -> \(String (describing: pair)) ")
+        let pair = transitions[charAsInt]; print("\t\t transition for \(String (describing: character)) -> \(String (describing: pair)) ")
         if pair != nil {
             let (attributes, goto) = pair!
             let isRead = attributes.contains("R")
@@ -448,11 +448,11 @@ class ReduceTable: Table, TableWithTransitionsWithIntKey {
         parser.treeStack.removeLast(removeCount)
 
         // self implemented hack (seems to allow bootstrapping?)
-        while self.transitions[parser.tableNumberStack.last!] == nil{
-            parser.tokenStack.removeLast()
-            parser.tableNumberStack.removeLast()
-            parser.treeStack.removeLast()
-        }
+        // while self.transitions[parser.tableNumberStack.last!] == nil{
+        //     parser.tokenStack.removeLast()
+        //     parser.tableNumberStack.removeLast()
+        //     parser.treeStack.removeLast()
+        // }
             
         // Use the top table number on the stack (`from table #`) and locate the pair (attr, `to table #`)
         // Case1: If you cannot find it, then it is a design error

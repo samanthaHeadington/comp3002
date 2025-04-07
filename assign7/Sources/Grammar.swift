@@ -25,10 +25,13 @@ extension Array where Element: Equatable {
 class Production: CustomStringConvertible {
     var leftPart: String = ""
     var lookahead: [String]?
+    var unprintableLookahed: [String]?
     var fsm: FiniteStateMachine = FiniteStateMachine()
     var generatesE: Bool = false
     var firstSet: [String] = []
+    var unprintableFirstSet: [String] = []
     var followSet: [String] = []
+    var unprintableFollowSet: [String] = []
 
     func name(_ newName: String) { leftPart = newName }
     func rightPart() -> FiniteStateMachine { return fsm }
@@ -164,7 +167,7 @@ class Grammar: CustomStringConvertible {
         while i < result.count {
             let state = result[i]
             state.transitionsDo {
-                if isETransitionLabel($0.label){ result.appendIfAbsent($0.goto) }
+                if isETransitionLabel($0.label) { result.appendIfAbsent($0.goto) }
             }
             i += 1
         }
@@ -180,7 +183,9 @@ class Grammar: CustomStringConvertible {
         while i < result.count {
             let state = result[i]
             state.transitionsDo {
-                if isETransitionLabel($0.label) && $0.goto as? ReadaheadState != nil{ result.appendIfAbsent($0.goto as! ReadaheadState) }
+                if isETransitionLabel($0.label) && $0.goto as? ReadaheadState != nil {
+                    result.appendIfAbsent($0.goto as! ReadaheadState)
+                }
             }
             i += 1
         }
@@ -219,7 +224,9 @@ class Grammar: CustomStringConvertible {
                 for state in eSuccessors(production.fsm.initialStates()) {
                     for transition in state.transitions {
                         if isReadTerminalTransition(transition) {
-                            if production.firstSet.addIfAbsentAdded(
+                            if !transition.label.printable() && production.unprintableFirstSet.addIfAbsentAdded(transition.label.terseDescription){
+                                changed = true
+                            } else if production.firstSet.addIfAbsentAdded(
                                 transition.label.terseDescription)
                             {
                                 changed = true
@@ -230,6 +237,12 @@ class Grammar: CustomStringConvertible {
                             var M = transition.label.terseDescription  //NOT for information only
                             if production.firstSet.addAllIfAbsentAdded(
                                 productionFor(M).firstSet)
+                            {
+                                changed = true
+                            }
+
+                            if production.unprintableFirstSet.addAllIfAbsentAdded(
+                                productionFor(M).unprintableFirstSet)
                             {
                                 changed = true
                             }
@@ -258,6 +271,9 @@ class Grammar: CustomStringConvertible {
             if production.lookahead != nil {
                 production.followSet.append(contentsOf: production.lookahead!)  //Shouldn't have duplicates
             }
+            if production.unprintableLookahed != nil{
+                production.unprintableFollowSet.append(contentsOf: production.unprintableLookahed!)
+            }
         }
 
         changed = true
@@ -274,7 +290,14 @@ class Grammar: CustomStringConvertible {
                             for rTransition in r.transitions {
                                 if isReadTerminalTransition(rTransition) {
                                     let a = rTransition.label
-                                    if Bproduction.followSet.addIfAbsentAdded(a.terseDescription) {
+                                    if !a.printable()
+                                        && Bproduction.unprintableFollowSet.addIfAbsentAdded(
+                                            a.terseDescription)
+                                    {
+                                        changed = true
+                                    } else if Bproduction.followSet.addIfAbsentAdded(
+                                        a.terseDescription)
+                                    {
                                         changed = true
                                     }
                                 } else if isNonterminalTransition(rTransition) {
@@ -292,6 +315,11 @@ class Grammar: CustomStringConvertible {
                                 {
                                     changed = true
                                 }
+                                if Bproduction.unprintableFollowSet.addAllIfAbsentAdded(
+                                    production.unprintableFollowSet)
+                                {
+                                    changed = true
+                                }
                             }
                         }
                     }
@@ -300,27 +328,34 @@ class Grammar: CustomStringConvertible {
         }
     }
 
-    func getFollow(_ raState: ReadaheadState) -> [String] {
-        var return_val: [String] = []
+    func getFollow(_ raState: ReadaheadState) -> Pair {
+        var printable_return_val: [String] = []
+        var unprintable_return_val: [String] = []
 
         eSuccessors([raState]).do {
             $0.transitions.do { transition in
                 if !transition.label.hasAction() {
                     if isNonterminalTransition(transition) {
-                        return_val.appendIfAbsent(productionFor(transition.label.name!).firstSet)
+                        printable_return_val.appendIfAbsent(productionFor(transition.label.name!).firstSet)
+                        unprintable_return_val.appendIfAbsent(productionFor(transition.label.name!).unprintableFirstSet)
                     } else {
-                        return_val.appendIfAbsent(transition.label.name!)
+                        if(transition.label.printable()){
+                            printable_return_val.appendIfAbsent(transition.label.name!)
+                        }else{
+                            unprintable_return_val.appendIfAbsent(transition.label.name!)
+                        }
                     }
                 }
             }
 
             let finals = ($0 as! ReadaheadState).items.filter { state in state.isFinal }
             finals.map { state in state.leftPart }.do { nonterminal in
-                return_val.appendIfAbsent(productionFor(nonterminal).followSet)
+                printable_return_val.appendIfAbsent(productionFor(nonterminal).followSet)
+                unprintable_return_val.appendIfAbsent(productionFor(nonterminal).unprintableFollowSet)
             }
         }
 
-        return return_val
+        return Pair(printable_return_val, unprintable_return_val)
     }
 
     func printEGeneratingFirstAndFollowSets() {
@@ -343,7 +378,7 @@ class Grammar: CustomStringConvertible {
         print("")
         for nonterminal in nonterminals.sorted(by: <) {
             print(
-                "//Follow(\(nonterminal)) = \((productionFor (nonterminal)).followSet.sorted (by: <))"
+                "//Follow(\(nonterminal)) = \((productionFor (nonterminal)).followSet.union((productionFor (nonterminal)).unprintableFollowSet).sorted (by: <))"
             )
         }
     }
