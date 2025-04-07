@@ -423,7 +423,7 @@ public class FiniteStateMachineState: Relatable {
     }
 
     func addTransition(_ transition: Transition) {
-        transitions.append(transition)
+        transitions.appendIfAbsent(transition)
     }
 
     func getAsTriples() -> [(Int, Label, Int)] {
@@ -467,7 +467,11 @@ public class ReadaheadState: FiniteStateMachineState {
     }
 
     override public var terseDescription: String {
-        return "ReadaheadState \(stateNumber) \(initialItems.map{$0.stateNumber})"
+        if(items.isEmpty){
+            return "ReadaheadState \(stateNumber) \(initialItems.map{$0.stateNumber})"
+        }else{
+            return "ReadaheadState \(stateNumber) \(items.map{$0.stateNumber})"
+        }
     }
 }
 
@@ -482,7 +486,7 @@ public class ReadbackState: FiniteStateMachineState {
 
     override public var terseDescription: String {
         return
-            "Readback \(stateNumber) \(initialItems.map{"(\(($0.first() as! FiniteStateMachineState).stateNumber), ReadaheadState \(($0.second() as! FiniteStateMachineState).stateNumber))"})"
+            "Readback \(stateNumber) \(initialItems.union(items).map{"(\(($0.first() as! FiniteStateMachineState).stateNumber), ReadaheadState \(($0.second() as! FiniteStateMachineState).stateNumber))"})"
     }
 }
 
