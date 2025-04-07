@@ -51,7 +51,6 @@ public final class Constructor: Translator {
 
     func walkTree(_ tree: VirtualTree) -> Any {
         let action = tree.label as String
-        // print("\n\n\n\(tree)\n")
         switch action {
         case "walkList":
             return walkList(tree)
@@ -274,13 +273,6 @@ public final class Constructor: Translator {
             index += 2
         }
 
-        // print("\n\n\n ~~~ POST LOOP FSMs ~~~");
-
-        // // moved print to post loop to check that copied fsms are not altered
-        // for (key, value) in fsmMap{
-        //     print ("FSM for \(key) = \n\(value)")
-        // }
-
         return 0
     }
 
@@ -292,8 +284,6 @@ public final class Constructor: Translator {
         }
 
         Grammar.activeGrammar!.finalize()
-
-        // print(Grammar.activeGrammar!.productions)
 
         Grammar.activeGrammar!.nonterminals.do {
             if Grammar.activeGrammar!.productionFor($0).isGoal()
@@ -330,9 +320,6 @@ public final class Constructor: Translator {
 
         renumber()
 
-        // print(Grammar.activeGrammar!.productionFor("DoubleQuotedStringOrSymbol"))
-
-        // printStates()
         if Grammar.activeGrammar!.isParser() {
             outputParserTables()
         } else {
@@ -374,11 +361,8 @@ public final class Constructor: Translator {
         var i = 0
 
         while i < readaheadStates.count {
-            // print(i)
             let raState = readaheadStates[i]
             let localDown = down.performRelationStar(raState.initialItems)
-
-            // print("\n\n    ~~~~~ \(i) ~~~~~    \n\n")
 
             localDown.do {
                 up.add(Pair($2, raState), and: $1, and: Pair($0, raState))
@@ -387,11 +371,7 @@ public final class Constructor: Translator {
             raState.items.append(contentsOf: raState.initialItems)
             raState.items.append(contentsOf: localDown.allTo())
 
-            // print("\(i), \(localDown)\n")
-            // print(raState.items)
-
             right.from(raState.items) { M, localRight in
-                // print(localRight.allTo())
                 let candidate = ReadaheadState(localRight.allTo())
                 var successor = readaheadStates.first { state in
                     state.initialItems.allSatisfy { candidate.initialItems.contains($0) }
@@ -427,10 +407,6 @@ public final class Constructor: Translator {
             let raState = readaheadStates[i]
             let finalItems = raState.items.filter { $0.isFinal }
             let partition = finalItems.partitionUsing { $0.leftPart }
-            // print("\n")
-            // print(raState.terseDescription)
-            // print(partition)
-            // print()
 
             for (key, value) in partition {
                 var new_state: FiniteStateMachineState = FiniteStateMachineState()
@@ -482,7 +458,6 @@ public final class Constructor: Translator {
 
             visible_left.from(rbState.items) { Mp, local_left in
                 let candidate = ReadbackState(initialItems: local_left.allTo())
-                // print(candidate)
                 var successor = readbackStates.first {
                     $0.initialItems.elementsEquivalent(candidate.initialItems)
                 }
@@ -631,13 +606,10 @@ public final class Constructor: Translator {
                 if transition.label.isVisible()
                     || Grammar.activeGrammar!.isNonterminal(transition.label.terseDescription)
                 {
-                    // print(raState)
                     stackable_states.append(transition.goto)
                 }
             }
         }
-
-        // print(stackable_states)
 
         // build invisible_left for readahead states
         let ra_invisible_left = Relation<FiniteStateMachineState, Label>()
@@ -653,8 +625,6 @@ public final class Constructor: Translator {
             ra_invisible_left.add($0.goto, and: $0.label, and: $0)
         }
 
-        // print(ra_invisible_left)
-
         for rdState in reduceStates {
             for (key, value) in rdState.value.restarts {
 
@@ -663,16 +633,6 @@ public final class Constructor: Translator {
                 while i < value.count {
                     let state = value[i]
                     i += 1
-
-                    // print(raState.terseDescription)
-                    // print(
-                    //     ra_invisible_left.performStar([raState]).filter {
-                    //         stackable_states.contains($0)
-                    //     }.map { $0.terseDescription }.joined(separator: ", "))
-
-                    // if stackable_states.contains(state) {
-                    //     continue
-                    // }
 
                     let alt_restarts = ra_invisible_left.performStar([state]).filter {
                         stackable_states.contains($0)
@@ -688,8 +648,6 @@ public final class Constructor: Translator {
                 }
             }
         }
-
-        // print(reduceStates)
     }
 
     func optimize() {
@@ -1108,7 +1066,6 @@ public final class Constructor: Translator {
     }
 
     func walkBuildTreeOrTokenFromName(_ tree: VirtualTree) -> Any {
-        // print(tree)
         (tree as! Tree).children.insert(
             Token(
                 label: "walkSymbol",
@@ -1220,179 +1177,7 @@ public final class Constructor: Translator {
         //of no concern to the student constructor... so that code is commented out..."
     }
 
-    var scannerTables: [Any] = [
-        [
-            "ScannerReadaheadTable", 1, ("}", "RK", 36), ("-", "RK", 8), ("[", "RK", 26),
-            (".", "RK", 6), ("]", "RK", 34), ("&", "RK", 29), ("=", "RK", 9), (")", "RK", 33),
-            ("?", "RK", 31), ("|", "RK", 35), ("+", "RK", 22),
-            ("ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz", "RK", 2), ("(", "RK", 25),
-            ("{", "RK", 24), ("*", "RK", 37), ("0123456789", "RK", 4), ("'", "R", 12),
-            ("/", "R", 7), ("$", "R", 3), ("\"", "R", 10), ("#", "R", 11),
-            ([10, 12, 13, 32, 9], "R", 5), ([256], "LK", 21),
-        ],
-        [
-            "ScannerReadaheadTable", 2,
-            ("0123456789:ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz", "RK", 2),
-            ("!#$%&'()*+,-./;<=>?@[\"\\]^{|}~", "LK", 23),
-            ([10, 12, 13, 147, 148, 256, 32, 96], "LK", 23),
-        ],
-        [
-            "ScannerReadaheadTable", 3,
-            (
-                "!#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\"\\]^_abcdefghijklmnopqrstuvwxyz{|}~",
-                "RK", 38
-            ), ([10, 12, 13, 147, 148, 32, 9, 96], "RK", 38),
-        ],
-        [
-            "ScannerReadaheadTable", 4, ("0123456789", "RK", 4),
-            (
-                "!#$%&'()*+,-./:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\"\\]^_abcdefghijklmnopqrstuvwxyz{|}~",
-                "LK", 27
-            ), ([10, 12, 13, 147, 148, 256, 32, 96], "LK", 27),
-        ],
-        [
-            "ScannerReadaheadTable", 5,
-            (
-                "!#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\"\\]^_abcdefghijklmnopqrstuvwxyz{|}~",
-                "LK", 1
-            ), ([10, 12, 13, 32, 9], "R", 5), ([147, 148, 256, 96], "LK", 1),
-        ],
-        [
-            "ScannerReadaheadTable", 6, (".", "RK", 39),
-            (
-                "!#$%&'()*+,-/0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\"\\]^_abcdefghijklmnopqrstuvwxyz{|}~",
-                "LK", 28
-            ), ([10, 12, 13, 147, 148, 256, 32, 96], "LK", 28),
-        ],
-        [
-            "ScannerReadaheadTable", 7, ("/", "R", 13),
-            (
-                "!#$%&'()*+,-.0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\"\\]^_abcdefghijklmnopqrstuvwxyz{|}~",
-                "LK", 40
-            ), ([10, 12, 13, 32, 9], "L", 40), ([147, 148, 256, 96], "LK", 40),
-        ],
-        [
-            "ScannerReadaheadTable", 8, (">", "RK", 41),
-            (
-                "!#$%&'()*+,-./0123456789:;<=?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\"\\]^_abcdefghijklmnopqrstuvwxyz{|}~",
-                "LK", 30
-            ), ([10, 12, 13, 147, 148, 256, 32, 96], "LK", 30),
-        ],
-        [
-            "ScannerReadaheadTable", 9, (">", "RK", 42),
-            (
-                "!#$%&'()*+,-./0123456789:;<=?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\"\\]^_abcdefghijklmnopqrstuvwxyz{|}~",
-                "LK", 32
-            ), ([10, 12, 13, 147, 148, 256, 32, 96], "LK", 32),
-        ],
-        [
-            "ScannerReadaheadTable", 10,
-            (
-                "!#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_abcdefghijklmnopqrstuvwxyz{|}~",
-                "RK", 10
-            ), ("\"", "R", 14), ([10, 12, 13, 147, 148, 32, 9, 96], "RK", 10), ([256], "LK", 44),
-        ],
-        [
-            "ScannerReadaheadTable", 11,
-            ("ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz", "RK", 15), ("\"", "R", 16),
-            ("'", "R", 17),
-        ],
-        [
-            "ScannerReadaheadTable", 12,
-            (
-                "!#$%&()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\"\\]^_abcdefghijklmnopqrstuvwxyz{|}~",
-                "RK", 12
-            ), ("'", "R", 18), ([10, 12, 13, 147, 148, 32, 9, 96], "RK", 12), ([256], "LK", 46),
-        ],
-        [
-            "ScannerReadaheadTable", 13,
-            (
-                "!#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\"\\]^_abcdefghijklmnopqrstuvwxyz{|}~",
-                "R", 13
-            ), ([147, 148, 32, 9, 96], "R", 13), ([10, 12, 13], "R", 1), ([256], "LK", 1),
-        ],
-        [
-            "ScannerReadaheadTable", 14, ("\"", "RK", 10),
-            (
-                "!#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_abcdefghijklmnopqrstuvwxyz{|}~",
-                "LK", 43
-            ), ([10, 12, 13, 147, 148, 256, 32, 96], "LK", 43),
-        ],
-        [
-            "ScannerReadaheadTable", 15,
-            ("0123456789:ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz", "RK", 15),
-            ("!#$%&'()*+,-./;<=>?@[\"\\]^{|}~", "LK", 45),
-            ([10, 12, 13, 147, 148, 256, 32, 96], "LK", 45),
-        ],
-        [
-            "ScannerReadaheadTable", 16,
-            (
-                "!#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_abcdefghijklmnopqrstuvwxyz{|}~",
-                "RK", 16
-            ), ("\"", "R", 19), ([10, 12, 13, 147, 148, 32, 9, 96], "RK", 16), ([256], "LK", 49),
-        ],
-        [
-            "ScannerReadaheadTable", 17,
-            (
-                "!#$%&()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\"\\]^_abcdefghijklmnopqrstuvwxyz{|}~",
-                "RK", 17
-            ), ("'", "R", 20), ([10, 12, 13, 147, 148, 32, 9, 96], "RK", 17), ([256], "LK", 51),
-        ],
-        [
-            "ScannerReadaheadTable", 18, ("'", "RK", 12),
-            (
-                "!#$%&()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\"\\]^_abcdefghijklmnopqrstuvwxyz{|}~",
-                "LK", 47
-            ), ([10, 12, 13, 147, 148, 256, 32, 96], "LK", 47),
-        ],
-        [
-            "ScannerReadaheadTable", 19, ("\"", "RK", 16),
-            (
-                "!#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_abcdefghijklmnopqrstuvwxyz{|}~",
-                "LK", 48
-            ), ([10, 12, 13, 147, 148, 256, 32, 96], "LK", 48),
-        ],
-        [
-            "ScannerReadaheadTable", 20, ("'", "RK", 17),
-            (
-                "!#$%&()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\"\\]^_abcdefghijklmnopqrstuvwxyz{|}~",
-                "LK", 50
-            ), ([10, 12, 13, 147, 148, 256, 32, 96], "LK", 50),
-        ],
-        ["SemanticTable", 21, "buildToken", ["-|"], 1],
-        ["SemanticTable", 22, "buildToken", ["Plus"], 1],
-        ["SemanticTable", 23, "buildToken", ["walkIdentifier"], 1],
-        ["SemanticTable", 24, "buildToken", ["OpenCurly"], 1],
-        ["SemanticTable", 25, "buildToken", ["OpenRound"], 1],
-        ["SemanticTable", 26, "buildToken", ["OpenSquare"], 1],
-        ["SemanticTable", 27, "buildToken", ["walkInteger"], 1],
-        ["SemanticTable", 28, "buildToken", ["Dot"], 1],
-        ["SemanticTable", 29, "buildToken", ["And"], 1],
-        ["SemanticTable", 30, "buildToken", ["Minus"], 1],
-        ["SemanticTable", 31, "buildToken", ["QuestionMark"], 1],
-        ["SemanticTable", 32, "buildToken", ["Equals"], 1],
-        ["SemanticTable", 33, "buildToken", ["CloseRound"], 1],
-        ["SemanticTable", 34, "buildToken", ["CloseSquare"], 1],
-        ["SemanticTable", 35, "buildToken", ["Or"], 1],
-        ["SemanticTable", 36, "buildToken", ["CloseCurly"], 1],
-        ["SemanticTable", 37, "buildToken", ["Star"], 1],
-        ["SemanticTable", 38, "buildToken", ["walkCharacter"], 1],
-        ["SemanticTable", 39, "buildToken", ["DotDot"], 1],
-        ["SemanticTable", 40, "syntaxError", ["// is a comment, / alone is not valid"], 1],
-        ["SemanticTable", 41, "buildToken", ["RightArrow"], 1],
-        ["SemanticTable", 42, "buildToken", ["FatRightArrow"], 1],
-        ["SemanticTable", 43, "buildToken", ["walkString"], 1],
-        ["SemanticTable", 44, "syntaxError", ["missing end quote for double quoted string"], 43],
-        ["SemanticTable", 45, "buildToken", ["walkSymbol"], 1],
-        ["SemanticTable", 46, "syntaxError", ["missing end quote for single quoted string"], 47],
-        ["SemanticTable", 47, "buildToken", ["walkString"], 1],
-        ["SemanticTable", 48, "buildToken", ["walkSymbol"], 1],
-        ["SemanticTable", 49, "syntaxError", ["missing end quote for double quoted string"], 48],
-        ["SemanticTable", 50, "buildToken", ["walkSymbol"], 1],
-        ["SemanticTable", 51, "syntaxError", ["missing end quote for single quoted string"], 50],
-    ]
-
-    var scannerrTables: [Any] =
+    var scannerTables: [Any] =
         [
             [
                 "ScannerReadaheadTable", 1, ("]", "RK", 35), ("/", "R", 10), ("{", "RK", 36),
@@ -1576,460 +1361,7 @@ public final class Constructor: Translator {
             ],
         ]
 
-    var parserTables: [Any] = [
-        [
-            "keywords", "stack", "noStack", "read", "look", "node", "noNode", "keep", "noKeep",
-            "parser", "scanner", "super", "superScanner", "attribute", "defaults", "keywords",
-            "output", "optimize", "terminal", "nonterminal",
-        ],
-        [
-            "ReadaheadTable", 1, ("GrammarType", "RSN", 2), ("parser", "RS", 143),
-            ("scanner", "RS", 144), ("super", "RS", 3), ("superScanner", "RS", 145),
-        ],
-        [
-            "ReadaheadTable", 2, ("walkString", "RSN", 63), ("optimize", "RS", 4),
-            ("Rules", "RSN", 179), ("Macro", "RSN", 5), ("LeftPart", "RSN", 6), ("Name", "RSN", 7),
-            ("output", "RS", 8), ("Defaults", "RSN", 148), ("attribute", "RS", 9),
-            ("walkIdentifier", "RSN", 63), ("keywords", "RS", 10), ("Production", "RSN", 5),
-        ],
-        ["ReadaheadTable", 3, ("scanner", "RS", 149)],
-        [
-            "ReadaheadTable", 4, ("Name", "RSN", 11), ("walkString", "RSN", 63),
-            ("walkIdentifier", "RSN", 63),
-        ],
-        [
-            "ReadaheadTable", 5, ("walkString", "RSN", 63), ("LeftPart", "RSN", 6),
-            ("Macro", "RSN", 5), ("Name", "RSN", 7), ("Production", "RSN", 5),
-            ("walkIdentifier", "RSN", 63), ("-|", "L", 146),
-        ],
-        [
-            "ReadaheadTable", 6, ("RightPart", "RSN", 12), ("RightParts", "RSN", 13),
-            ("RightArrow", "RS", 14),
-        ],
-        [
-            "ReadaheadTable", 7, ("Equals", "RS", 15), ("OpenCurly", "RS", 16),
-            ("RightArrow", "L", 147),
-        ],
-        [
-            "ReadaheadTable", 8, ("Name", "RSN", 17), ("walkString", "RSN", 63),
-            ("walkIdentifier", "RSN", 63),
-        ],
-        [
-            "ReadaheadTable", 9, ("defaults", "RS", 18), ("nonterminal", "RS", 19),
-            ("terminal", "RS", 20),
-        ],
-        [
-            "ReadaheadTable", 10, ("Name", "RSN", 21), ("walkString", "RSN", 63),
-            ("walkIdentifier", "RSN", 63),
-        ],
-        ["ReadaheadTable", 11, ("Dot", "RS", 152)],
-        [
-            "ReadaheadTable", 12, ("RightArrow", "RS", 14), ("RightPart", "RSN", 12),
-            ("Dot", "L", 150),
-        ],
-        ["ReadaheadTable", 13, ("Dot", "RS", 153)],
-        [
-            "ReadaheadTable", 14, ("walkString", "RSN", 63), ("OpenCurly", "RS", 22),
-            ("RepetitionOption", "RSN", 23), ("SemanticAction", "RSN", 154),
-            ("Concatenation", "RSN", 24), ("walkCharacter", "RSN", 70), ("Primary", "RSN", 25),
-            ("walkIdentifier", "RSN", 63), ("walkInteger", "RSN", 70), ("Secondary", "RSN", 26),
-            ("walkSymbol", "RSN", 27), ("Name", "RSN", 71), ("Alternation", "RSN", 28),
-            ("OpenRound", "RS", 29), ("AndExpression", "RSN", 30), ("Byte", "RSN", 31),
-            ("Expression", "RSN", 32), ("And", "L", 151), ("CloseCurly", "L", 151),
-            ("Dot", "L", 151), ("CloseRound", "L", 151), ("FatRightArrow", "L", 151),
-            ("Minus", "L", 151), ("RightArrow", "L", 151),
-        ],
-        [
-            "ReadaheadTable", 15, ("walkString", "RSN", 63), ("OpenCurly", "RS", 22),
-            ("Expression", "RSN", 33), ("SemanticAction", "RSN", 154), ("Concatenation", "RSN", 24),
-            ("walkCharacter", "RSN", 70), ("Primary", "RSN", 25), ("walkIdentifier", "RSN", 63),
-            ("walkInteger", "RSN", 70), ("Secondary", "RSN", 26), ("walkSymbol", "RSN", 27),
-            ("Name", "RSN", 71), ("Alternation", "RSN", 28), ("OpenRound", "RS", 29),
-            ("AndExpression", "RSN", 30), ("Byte", "RSN", 31), ("RepetitionOption", "RSN", 23),
-            ("And", "L", 151), ("CloseCurly", "L", 151), ("Dot", "L", 151),
-            ("CloseRound", "L", 151), ("FatRightArrow", "L", 151), ("Minus", "L", 151),
-            ("RightArrow", "L", 151),
-        ],
-        [
-            "ReadaheadTable", 16, ("walkString", "RSN", 63), ("OpenCurly", "RS", 22),
-            ("RepetitionOption", "RSN", 23), ("SemanticAction", "RSN", 154),
-            ("Concatenation", "RSN", 24), ("walkCharacter", "RSN", 70), ("Primary", "RSN", 25),
-            ("walkIdentifier", "RSN", 63), ("walkInteger", "RSN", 70), ("Secondary", "RSN", 26),
-            ("walkSymbol", "RSN", 27), ("Name", "RSN", 71), ("Alternation", "RSN", 28),
-            ("OpenRound", "RS", 29), ("AndExpression", "RSN", 30), ("Byte", "RSN", 31),
-            ("Expression", "RSN", 34), ("And", "L", 151), ("CloseCurly", "L", 151),
-            ("Dot", "L", 151), ("CloseRound", "L", 151), ("FatRightArrow", "L", 151),
-            ("Minus", "L", 151), ("RightArrow", "L", 151),
-        ],
-        ["ReadaheadTable", 17, ("Dot", "RS", 156)],
-        [
-            "ReadaheadTable", 18, ("walkString", "RSN", 63), ("walkIdentifier", "RSN", 63),
-            ("Name", "RSN", 35),
-        ],
-        ["ReadaheadTable", 19, ("defaults", "RS", 36)],
-        ["ReadaheadTable", 20, ("defaults", "RS", 37)],
-        [
-            "ReadaheadTable", 21, ("Dot", "RS", 157), ("Name", "RSN", 21),
-            ("walkString", "RSN", 63), ("walkIdentifier", "RSN", 63),
-        ],
-        [
-            "ReadaheadTable", 22, ("walkString", "RSN", 63), ("OpenCurly", "RS", 22),
-            ("SemanticAction", "RSN", 154), ("Expression", "RSN", 38), ("Concatenation", "RSN", 24),
-            ("walkCharacter", "RSN", 70), ("Primary", "RSN", 25), ("walkIdentifier", "RSN", 63),
-            ("walkInteger", "RSN", 70), ("Secondary", "RSN", 26), ("walkSymbol", "RSN", 27),
-            ("Name", "RSN", 71), ("Alternation", "RSN", 28), ("OpenRound", "RS", 29),
-            ("AndExpression", "RSN", 30), ("Byte", "RSN", 31), ("RepetitionOption", "RSN", 23),
-            ("And", "L", 151), ("CloseCurly", "L", 151), ("Dot", "L", 151),
-            ("CloseRound", "L", 151), ("FatRightArrow", "L", 151), ("Minus", "L", 151),
-            ("RightArrow", "L", 151),
-        ],
-        [
-            "ReadaheadTable", 23, ("walkString", "RSN", 63), ("SemanticAction", "RSN", 154),
-            ("OpenCurly", "RS", 22), ("walkCharacter", "RSN", 70), ("Primary", "RSN", 25),
-            ("walkInteger", "RSN", 70), ("walkIdentifier", "RSN", 63), ("Secondary", "RSN", 26),
-            ("walkSymbol", "RSN", 27), ("Name", "RSN", 71), ("OpenRound", "RS", 29),
-            ("Byte", "RSN", 31), ("RepetitionOption", "RSN", 39), ("Or", "L", 68), ("And", "L", 68),
-            ("CloseCurly", "L", 68), ("Dot", "L", 68), ("CloseRound", "L", 68),
-            ("FatRightArrow", "L", 68), ("Minus", "L", 68), ("RightArrow", "L", 68),
-        ],
-        [
-            "ReadaheadTable", 24, ("Or", "RS", 40), ("And", "L", 69), ("CloseCurly", "L", 69),
-            ("Dot", "L", 69), ("CloseRound", "L", 69), ("FatRightArrow", "L", 69),
-            ("Minus", "L", 69), ("RightArrow", "L", 69),
-        ],
-        [
-            "ReadaheadTable", 25, ("QuestionMark", "RS", 159), ("Plus", "RS", 160),
-            ("Star", "RS", 161), ("Or", "L", 100), ("OpenRound", "L", 100), ("OpenCurly", "L", 100),
-            ("walkIdentifier", "L", 100), ("walkString", "L", 100), ("walkSymbol", "L", 100),
-            ("walkCharacter", "L", 100), ("walkInteger", "L", 100), ("And", "L", 100),
-            ("CloseCurly", "L", 100), ("Dot", "L", 100), ("CloseRound", "L", 100),
-            ("FatRightArrow", "L", 100), ("Minus", "L", 100), ("RightArrow", "L", 100),
-        ],
-        [
-            "ReadaheadTable", 26, ("OpenSquare", "RS", 41), ("Or", "L", 75), ("OpenRound", "L", 75),
-            ("OpenCurly", "L", 75), ("walkIdentifier", "L", 75), ("walkString", "L", 75),
-            ("walkSymbol", "L", 75), ("walkCharacter", "L", 75), ("walkInteger", "L", 75),
-            ("Star", "L", 75), ("QuestionMark", "L", 75), ("Plus", "L", 75), ("And", "L", 75),
-            ("CloseCurly", "L", 75), ("Dot", "L", 75), ("CloseRound", "L", 75),
-            ("FatRightArrow", "L", 75), ("Minus", "L", 75), ("RightArrow", "L", 75),
-        ],
-        [
-            "ReadaheadTable", 27, ("OpenSquare", "RS", 42), ("Or", "L", 155),
-            ("OpenRound", "L", 155), ("OpenCurly", "L", 155), ("walkIdentifier", "L", 155),
-            ("walkString", "L", 155), ("walkSymbol", "L", 155), ("walkCharacter", "L", 155),
-            ("walkInteger", "L", 155), ("Star", "L", 155), ("QuestionMark", "L", 155),
-            ("Plus", "L", 155), ("RightArrow", "L", 155), ("Dot", "L", 155), ("And", "L", 155),
-            ("CloseCurly", "L", 155), ("CloseRound", "L", 155), ("FatRightArrow", "L", 155),
-            ("Minus", "L", 155),
-        ],
-        [
-            "ReadaheadTable", 28, ("And", "RS", 43), ("CloseCurly", "L", 116), ("Dot", "L", 116),
-            ("CloseRound", "L", 116), ("FatRightArrow", "L", 116), ("Minus", "L", 116),
-            ("RightArrow", "L", 116),
-        ],
-        [
-            "ReadaheadTable", 29, ("walkString", "RSN", 63), ("OpenCurly", "RS", 22),
-            ("RepetitionOption", "RSN", 23), ("SemanticAction", "RSN", 154),
-            ("Concatenation", "RSN", 24), ("walkCharacter", "RSN", 70), ("Primary", "RSN", 25),
-            ("walkIdentifier", "RSN", 63), ("walkInteger", "RSN", 70), ("Secondary", "RSN", 26),
-            ("walkSymbol", "RSN", 27), ("Name", "RSN", 71), ("Alternation", "RSN", 28),
-            ("OpenRound", "RS", 29), ("AndExpression", "RSN", 30), ("Byte", "RSN", 31),
-            ("Expression", "RSN", 44), ("And", "L", 151), ("CloseCurly", "L", 151),
-            ("Dot", "L", 151), ("CloseRound", "L", 151), ("FatRightArrow", "L", 151),
-            ("Minus", "L", 151), ("RightArrow", "L", 151),
-        ],
-        [
-            "ReadaheadTable", 30, ("Minus", "RS", 45), ("CloseCurly", "L", 117), ("Dot", "L", 117),
-            ("CloseRound", "L", 117), ("FatRightArrow", "L", 117), ("RightArrow", "L", 117),
-        ],
-        [
-            "ReadaheadTable", 31, ("DotDot", "RS", 46), ("OpenSquare", "L", 71), ("Or", "L", 71),
-            ("OpenRound", "L", 71), ("OpenCurly", "L", 71), ("walkIdentifier", "L", 71),
-            ("walkString", "L", 71), ("walkSymbol", "L", 71), ("walkCharacter", "L", 71),
-            ("walkInteger", "L", 71), ("Star", "L", 71), ("QuestionMark", "L", 71),
-            ("Plus", "L", 71), ("And", "L", 71), ("CloseCurly", "L", 71), ("Dot", "L", 71),
-            ("CloseRound", "L", 71), ("FatRightArrow", "L", 71), ("Minus", "L", 71),
-            ("RightArrow", "L", 71),
-        ],
-        [
-            "ReadaheadTable", 32, ("FatRightArrow", "RS", 47), ("RightArrow", "L", 72),
-            ("Dot", "L", 72),
-        ],
-        ["ReadaheadTable", 33, ("Dot", "RS", 162)],
-        ["ReadaheadTable", 34, ("CloseCurly", "RS", 163)],
-        [
-            "ReadaheadTable", 35, ("walkIdentifier", "RSN", 63), ("Dot", "RS", 164),
-            ("Name", "RSN", 35), ("walkString", "RSN", 63),
-        ],
-        [
-            "ReadaheadTable", 36, ("walkString", "RSN", 63), ("walkIdentifier", "RSN", 63),
-            ("Name", "RSN", 48),
-        ],
-        [
-            "ReadaheadTable", 37, ("walkString", "RSN", 63), ("walkIdentifier", "RSN", 63),
-            ("Name", "RSN", 49),
-        ],
-        ["ReadaheadTable", 38, ("CloseCurly", "RS", 165)],
-        [
-            "ReadaheadTable", 39, ("walkString", "RSN", 63), ("OpenCurly", "RS", 22),
-            ("SemanticAction", "RSN", 154), ("walkCharacter", "RSN", 70), ("Primary", "RSN", 25),
-            ("walkInteger", "RSN", 70), ("walkIdentifier", "RSN", 63), ("Secondary", "RSN", 26),
-            ("walkSymbol", "RSN", 27), ("Name", "RSN", 71), ("OpenRound", "RS", 29),
-            ("RepetitionOption", "RSN", 39), ("Byte", "RSN", 31), ("Or", "L", 158),
-            ("And", "L", 158), ("CloseCurly", "L", 158), ("Dot", "L", 158),
-            ("CloseRound", "L", 158), ("FatRightArrow", "L", 158), ("Minus", "L", 158),
-            ("RightArrow", "L", 158),
-        ],
-        [
-            "ReadaheadTable", 40, ("walkString", "RSN", 63), ("OpenCurly", "RS", 22),
-            ("SemanticAction", "RSN", 154), ("Concatenation", "RSN", 50),
-            ("walkCharacter", "RSN", 70), ("Primary", "RSN", 25), ("walkInteger", "RSN", 70),
-            ("walkIdentifier", "RSN", 63), ("Secondary", "RSN", 26), ("walkSymbol", "RSN", 27),
-            ("Name", "RSN", 71), ("OpenRound", "RS", 29), ("Byte", "RSN", 31),
-            ("RepetitionOption", "RSN", 23),
-        ],
-        [
-            "ReadaheadTable", 41, ("stack", "RSN", 80), ("CloseSquare", "RS", 167),
-            ("keep", "RSN", 80), ("noNode", "RSN", 80), ("node", "RSN", 80), ("read", "RSN", 80),
-            ("Attribute", "RSN", 41), ("noKeep", "RSN", 80), ("look", "RSN", 80),
-            ("noStack", "RSN", 80),
-        ],
-        [
-            "ReadaheadTable", 42, ("SemanticActionParameter", "RSN", 42), ("walkString", "RSN", 63),
-            ("CloseSquare", "RS", 168), ("walkCharacter", "RSN", 70), ("Name", "RSN", 81),
-            ("walkInteger", "RSN", 70), ("Byte", "RSN", 81), ("walkIdentifier", "RSN", 63),
-            ("walkSymbol", "RSN", 81),
-        ],
-        [
-            "ReadaheadTable", 43, ("walkString", "RSN", 63), ("OpenCurly", "RS", 22),
-            ("SemanticAction", "RSN", 154), ("Concatenation", "RSN", 24),
-            ("walkCharacter", "RSN", 70), ("Primary", "RSN", 25), ("walkIdentifier", "RSN", 63),
-            ("walkInteger", "RSN", 70), ("Secondary", "RSN", 26), ("walkSymbol", "RSN", 27),
-            ("Name", "RSN", 71), ("Alternation", "RSN", 169), ("OpenRound", "RS", 29),
-            ("Byte", "RSN", 31), ("RepetitionOption", "RSN", 23), ("And", "L", 151),
-            ("CloseCurly", "L", 151), ("Dot", "L", 151), ("CloseRound", "L", 151),
-            ("FatRightArrow", "L", 151), ("Minus", "L", 151), ("RightArrow", "L", 151),
-        ],
-        ["ReadaheadTable", 44, ("CloseRound", "RS", 82)],
-        [
-            "ReadaheadTable", 45, ("walkString", "RSN", 63), ("OpenCurly", "RS", 22),
-            ("SemanticAction", "RSN", 154), ("Concatenation", "RSN", 24),
-            ("walkCharacter", "RSN", 70), ("Primary", "RSN", 25), ("walkIdentifier", "RSN", 63),
-            ("walkInteger", "RSN", 70), ("Secondary", "RSN", 26), ("walkSymbol", "RSN", 27),
-            ("Name", "RSN", 71), ("Alternation", "RSN", 28), ("OpenRound", "RS", 29),
-            ("AndExpression", "RSN", 170), ("Byte", "RSN", 31), ("RepetitionOption", "RSN", 23),
-            ("And", "L", 151), ("CloseCurly", "L", 151), ("Dot", "L", 151),
-            ("CloseRound", "L", 151), ("FatRightArrow", "L", 151), ("Minus", "L", 151),
-            ("RightArrow", "L", 151),
-        ],
-        [
-            "ReadaheadTable", 46, ("walkCharacter", "RSN", 70), ("walkInteger", "RSN", 70),
-            ("Byte", "RSN", 171),
-        ],
-        [
-            "ReadaheadTable", 47, ("walkString", "RSN", 63), ("Plus", "RS", 51),
-            ("TreeBuildingOptions", "RSN", 172), ("walkInteger", "RSN", 173), ("Minus", "RS", 52),
-            ("Name", "RSN", 174), ("walkIdentifier", "RSN", 63), ("walkSymbol", "RSN", 27),
-            ("SemanticAction", "RSN", 175),
-        ],
-        [
-            "ReadaheadTable", 48, ("walkIdentifier", "RSN", 63), ("Dot", "RS", 176),
-            ("Name", "RSN", 48), ("walkString", "RSN", 63),
-        ],
-        [
-            "ReadaheadTable", 49, ("walkIdentifier", "RSN", 63), ("Dot", "RS", 177),
-            ("Name", "RSN", 49), ("walkString", "RSN", 63),
-        ],
-        [
-            "ReadaheadTable", 50, ("Or", "RS", 40), ("And", "L", 166), ("CloseCurly", "L", 166),
-            ("Dot", "L", 166), ("CloseRound", "L", 166), ("FatRightArrow", "L", 166),
-            ("Minus", "L", 166), ("RightArrow", "L", 166),
-        ],
-        ["ReadaheadTable", 51, ("walkInteger", "RSN", 173)],
-        ["ReadaheadTable", 52, ("walkInteger", "RSN", 178)],
-        [
-            "ReadbackTable", 53, (("Macro", 5), "RSN", 53), (("Production", 5), "RSN", 53),
-            (("GrammarType", 2), "L", 142), (("Defaults", 148), "L", 142),
-        ],
-        ["ReadbackTable", 54, (("RightPart", 12), "RSN", 54), (("LeftPart", 6), "L", 141)],
-        [
-            "ReadbackTable", 55, (("RepetitionOption", 23), "RSN", 130),
-            (("RepetitionOption", 39), "RSN", 55),
-        ],
-        ["ReadbackTable", 56, (("OpenSquare", 41), "RS", 75), (("Attribute", 41), "RSN", 56)],
-        [
-            "ReadbackTable", 57, (("OpenSquare", 42), "RS", 115),
-            (("SemanticActionParameter", 42), "RSN", 57),
-        ],
-        ["ReadbackTable", 58, (("Name", 21), "RSN", 58), (("keywords", 10), "RS", 122)],
-        ["ReadbackTable", 59, (("defaults", 18), "RS", 111), (("Name", 35), "RSN", 59)],
-        [
-            "ReadbackTable", 60, (("Concatenation", 24), "RSN", 123),
-            (("Concatenation", 50), "RSN", 105),
-        ],
-        ["ReadbackTable", 61, (("Name", 48), "RSN", 61), (("defaults", 36), "RS", 121)],
-        ["ReadbackTable", 62, (("Name", 49), "RSN", 62), (("defaults", 37), "RS", 121)],
-        ["ShiftbackTable", 63, 1, 131],
-        ["ShiftbackTable", 64, 1, 126],
-        ["ShiftbackTable", 65, 1, 53],
-        ["ShiftbackTable", 66, 2, 126],
-        ["ShiftbackTable", 67, 1, 54],
-        ["ShiftbackTable", 68, 1, 130],
-        ["ShiftbackTable", 69, 1, 123],
-        ["ShiftbackTable", 70, 1, 132],
-        ["ShiftbackTable", 71, 1, 139],
-        ["ShiftbackTable", 72, 2, 127],
-        ["ShiftbackTable", 73, 2, 111],
-        ["ShiftbackTable", 74, 2, 112],
-        ["ShiftbackTable", 75, 1, 125],
-        ["ShiftbackTable", 76, 2, 111],
-        ["ShiftbackTable", 77, 2, 58],
-        ["ShiftbackTable", 78, 1, 55],
-        ["ShiftbackTable", 79, 2, 140],
-        ["ShiftbackTable", 80, 1, 124],
-        ["ShiftbackTable", 81, 1, 133],
-        ["ShiftbackTable", 82, 2, 71],
-        ["ShiftbackTable", 83, 2, 113],
-        ["ShiftbackTable", 84, 2, 114],
-        ["ShiftbackTable", 85, 2, 59],
-        ["ShiftbackTable", 86, 2, 71],
-        ["ShiftbackTable", 87, 2, 60],
-        ["ShiftbackTable", 88, 1, 56],
-        ["ShiftbackTable", 89, 1, 57],
-        ["ShiftbackTable", 90, 2, 116],
-        ["ShiftbackTable", 91, 2, 117],
-        ["ShiftbackTable", 92, 2, 71],
-        ["ShiftbackTable", 93, 2, 72],
-        ["ShiftbackTable", 94, 1, 129],
-        ["ShiftbackTable", 95, 2, 61],
-        ["ShiftbackTable", 96, 2, 62],
-        ["ShiftbackTable", 97, 2, 129],
-        ["ShiftbackTable", 98, 2, 128],
-        ["ShiftbackTable", 99, 1, 58],
-        ["ShiftbackTable", 100, 1, 140],
-        ["ShiftbackTable", 101, 2, 139],
-        ["ShiftbackTable", 102, 2, 118],
-        ["ShiftbackTable", 103, 2, 119],
-        ["ShiftbackTable", 104, 1, 59],
-        ["ShiftbackTable", 105, 1, 60],
-        ["ShiftbackTable", 106, 2, 135],
-        ["ShiftbackTable", 107, 2, 137],
-        ["ShiftbackTable", 108, 3, 127],
-        ["ShiftbackTable", 109, 1, 61],
-        ["ShiftbackTable", 110, 1, 62],
-        ["ShiftbackTable", 111, 1, 122],
-        ["ShiftbackTable", 112, 1, 128],
-        ["ShiftbackTable", 113, 2, 138],
-        ["ShiftbackTable", 114, 2, 134],
-        ["ShiftbackTable", 115, 1, 136],
-        ["ShiftbackTable", 116, 1, 135],
-        ["ShiftbackTable", 117, 1, 137],
-        ["ShiftbackTable", 118, 1, 138],
-        ["ShiftbackTable", 119, 1, 134],
-        ["ShiftbackTable", 120, 1, 127],
-        ["ShiftbackTable", 121, 2, 122],
-        ["ReduceTable", 122, "Defaults", (2, "RSN", 148), (148, "RSN", 148)],
-        [
-            "ReduceTable", 123, "Alternation", (43, "RSN", 169), (169, "RSN", 169), (14, "RSN", 28),
-            (15, "RSN", 28), (16, "RSN", 28), (22, "RSN", 28), (29, "RSN", 28), (45, "RSN", 28),
-        ],
-        ["ReduceTable", 124, "Attribute", (41, "RSN", 41)],
-        [
-            "ReduceTable", 125, "Primary", (14, "RSN", 25), (15, "RSN", 25), (16, "RSN", 25),
-            (22, "RSN", 25), (23, "RSN", 25), (29, "RSN", 25), (39, "RSN", 25), (40, "RSN", 25),
-            (43, "RSN", 25), (45, "RSN", 25),
-        ],
-        ["ReduceTable", 126, "GrammarType", (1, "RSN", 2)],
-        ["ReduceTable", 127, "RightPart", (6, "RSN", 12), (12, "RSN", 12)],
-        ["ReduceTable", 128, "Production", (2, "RSN", 5), (5, "RSN", 5), (148, "RSN", 5)],
-        ["ReduceTable", 129, "TreeBuildingOptions", (47, "RSN", 172), (172, "RSN", 172)],
-        [
-            "ReduceTable", 130, "Concatenation", (40, "RSN", 50), (14, "RSN", 24), (15, "RSN", 24),
-            (16, "RSN", 24), (22, "RSN", 24), (29, "RSN", 24), (43, "RSN", 24), (45, "RSN", 24),
-        ],
-        [
-            "ReduceTable", 131, "Name", (14, "RSN", 71), (15, "RSN", 71), (16, "RSN", 71),
-            (22, "RSN", 71), (23, "RSN", 71), (29, "RSN", 71), (39, "RSN", 71), (40, "RSN", 71),
-            (43, "RSN", 71), (45, "RSN", 71), (71, "RSN", 71), (18, "RSN", 35), (35, "RSN", 35),
-            (8, "RSN", 17), (47, "RSN", 174), (174, "RSN", 174), (10, "RSN", 21), (21, "RSN", 21),
-            (4, "RSN", 11), (42, "RSN", 81), (81, "RSN", 81), (36, "RSN", 48), (48, "RSN", 48),
-            (2, "RSN", 7), (5, "RSN", 7), (148, "RSN", 7), (37, "RSN", 49), (49, "RSN", 49),
-        ],
-        [
-            "ReduceTable", 132, "Byte", (46, "RSN", 171), (171, "RSN", 171), (42, "RSN", 81),
-            (81, "RSN", 81), (14, "RSN", 31), (15, "RSN", 31), (16, "RSN", 31), (22, "RSN", 31),
-            (23, "RSN", 31), (29, "RSN", 31), (39, "RSN", 31), (40, "RSN", 31), (43, "RSN", 31),
-            (45, "RSN", 31),
-        ],
-        ["ReduceTable", 133, "SemanticActionParameter", (42, "RSN", 42)],
-        ["ReduceTable", 134, "LeftPart", (2, "RSN", 6), (5, "RSN", 6), (148, "RSN", 6)],
-        [
-            "ReduceTable", 135, "AndExpression", (14, "RSN", 30), (15, "RSN", 30), (16, "RSN", 30),
-            (22, "RSN", 30), (29, "RSN", 30), (45, "RSN", 170), (170, "RSN", 170),
-        ],
-        [
-            "ReduceTable", 136, "SemanticAction", (14, "RSN", 154), (15, "RSN", 154),
-            (16, "RSN", 154), (22, "RSN", 154), (23, "RSN", 154), (29, "RSN", 154),
-            (39, "RSN", 154), (40, "RSN", 154), (43, "RSN", 154), (45, "RSN", 154),
-            (154, "RSN", 154), (47, "RSN", 175), (175, "RSN", 175),
-        ],
-        [
-            "ReduceTable", 137, "Expression", (14, "RSN", 32), (29, "RSN", 44), (15, "RSN", 33),
-            (16, "RSN", 34), (22, "RSN", 38),
-        ],
-        ["ReduceTable", 138, "Macro", (2, "RSN", 5), (5, "RSN", 5), (148, "RSN", 5)],
-        [
-            "ReduceTable", 139, "Secondary", (14, "RSN", 26), (15, "RSN", 26), (16, "RSN", 26),
-            (22, "RSN", 26), (23, "RSN", 26), (29, "RSN", 26), (39, "RSN", 26), (40, "RSN", 26),
-            (43, "RSN", 26), (45, "RSN", 26),
-        ],
-        [
-            "ReduceTable", 140, "RepetitionOption", (14, "RSN", 23), (15, "RSN", 23),
-            (16, "RSN", 23), (22, "RSN", 23), (29, "RSN", 23), (40, "RSN", 23), (43, "RSN", 23),
-            (45, "RSN", 23), (23, "RSN", 39), (39, "RSN", 39),
-        ],
-        ["ReduceTable", 141, "RightParts", (6, "RSN", 13)],
-        ["ReduceTable", 142, "Rules", (2, "RSN", 179), (179, "RSN", 179), (148, "RSN", 179)],
-        ["SemanticTable", 143, "processTypeNow", ["parser"], 64],
-        ["SemanticTable", 144, "processTypeNow", ["scanner"], 64],
-        ["SemanticTable", 145, "processTypeNow", ["superScanner"], 64],
-        ["SemanticTable", 146, "buildTree", ["walkGrammar"], 65],
-        ["SemanticTable", 147, "buildTree", ["walkLeftPart"], 119],
-        ["SemanticTable", 148, "processAndDiscardDefaultsNow", [], 2],
-        ["SemanticTable", 149, "processTypeNow", ["superScanner"], 66],
-        ["SemanticTable", 150, "buildTree", ["walkOr"], 67],
-        ["SemanticTable", 151, "buildTree", ["walkEpsilon"], 123],
-        ["SemanticTable", 152, "buildTree", ["walkOptimize"], 73],
-        ["SemanticTable", 153, "buildTree", ["walkProduction"], 74],
-        ["SemanticTable", 154, "buildTree", ["walkNonTreeBuildingSemanticAction"], 75],
-        ["SemanticTable", 155, "buildTree", ["walkSemanticAction"], 115],
-        ["SemanticTable", 156, "buildTree", ["walkOutput"], 76],
-        ["SemanticTable", 157, "buildTree", ["walkKeywords"], 77],
-        ["SemanticTable", 158, "buildTree", ["walkConcatenation"], 78],
-        ["SemanticTable", 159, "buildTree", ["walkQuestionMark"], 79],
-        ["SemanticTable", 160, "buildTree", ["walkPlus"], 79],
-        ["SemanticTable", 161, "buildTree", ["walkStar"], 79],
-        ["SemanticTable", 162, "buildTree", ["walkMacro"], 83],
-        ["SemanticTable", 163, "buildTree", ["walkLeftPartWithLookahead"], 84],
-        ["SemanticTable", 164, "buildTree", ["walkAttributeDefaults"], 85],
-        ["SemanticTable", 165, "buildTree", ["walkLook"], 86],
-        ["SemanticTable", 166, "buildTree", ["walkOr"], 87],
-        ["SemanticTable", 167, "buildTree", ["walkAttributes"], 88],
-        ["SemanticTable", 168, "buildTree", ["walkSemanticAction"], 89],
-        ["SemanticTable", 169, "buildTree", ["walkAnd"], 90],
-        ["SemanticTable", 170, "buildTree", ["walkMinus"], 91],
-        ["SemanticTable", 171, "buildTree", ["walkDotDot"], 92],
-        ["SemanticTable", 172, "buildTree", ["walkConcatenation"], 93],
-        ["SemanticTable", 173, "buildTree", ["walkBuildTreeFromLeftIndex"], 97],
-        ["SemanticTable", 174, "buildTree", ["walkBuildTreeOrTokenFromName"], 94],
-        ["SemanticTable", 175, "buildTree", ["walkTreeBuildingSemanticAction"], 94],
-        ["SemanticTable", 176, "buildTree", ["walkAttributeNonterminalDefaults"], 95],
-        ["SemanticTable", 177, "buildTree", ["walkAttributeTerminalDefaults"], 96],
-        ["SemanticTable", 178, "buildTree", ["walkBuildTreeFromRightIndex"], 97],
-        ["AcceptTable", 179],
-    ]
-
-    var parrserTables: [Any] =
+    var parserTables: [Any] =
         [
             [
                 "keywords", "stack", "noStack", "read", "look", "node", "noNode", "keep", "noKeep",

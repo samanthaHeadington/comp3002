@@ -352,7 +352,6 @@ class ReadbackTable: Table, TableWithTransitionsWithPairKey {
         let a = parser.tokenStack[parser.left - 1].label as String?
         let b = parser.tableNumberStack[parser.left - 1] as Int
         let pair = ParserPair((a!,b))
-        print(pair)
         if transitions[pair] == nil {
             throw TransducerError.designError("incorrect Readback tables")
         }
@@ -446,14 +445,6 @@ class ReduceTable: Table, TableWithTransitionsWithIntKey {
         parser.tokenStack.removeLast(removeCount)
         parser.tableNumberStack.removeLast(removeCount)
         parser.treeStack.removeLast(removeCount)
-
-        // self implemented hack (seems to allow bootstrapping?)
-        // while self.transitions[parser.tableNumberStack.last!] == nil{
-        //     print(parser.tableNumberStack)
-        //     parser.tokenStack.removeLast()
-        //     parser.tableNumberStack.removeLast()
-        //     parser.treeStack.removeLast()
-        // }
             
         // Use the top table number on the stack (`from table #`) and locate the pair (attr, `to table #`)
         // Case1: If you cannot find it, then it is a design error
@@ -755,18 +746,8 @@ public final class Parser: Transducer {
         scanner.scanTokens(text)
         var index: Int = 1
         var table = tables[index]!
-        var i = 1
             
         while table.tableType != .AcceptTable {
-            print(table)
-            print(scanner.peekToken())
-            print("Number stack: \(tableNumberStack)")
-            print("Table index: \(index)")
-            print("RemoveCount: \(right - left + 1)")
-            print("Tables walked: \(i)\n")
-            i += 1
-
-            // if i == 20{break}
 
             do {
                 debug("Parser \(table.tableType) #\(index) is running...\n")
@@ -783,8 +764,6 @@ public final class Parser: Transducer {
                 print("Syntax error : Bad index")
                 break
             }
-
-            // if i == 265{break}
         }
             
         return treeStack.last!

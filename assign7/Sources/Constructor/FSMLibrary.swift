@@ -113,15 +113,6 @@ public class FiniteStateMachine: CustomStringConvertible {
         let lhs_recognizes_e = lhs.canRecognizeE()
         let rhs_recognizes_e = rhs.canRecognizeE()
 
-        // print(lhs)
-        // print(lhs_recognizes_e)
-
-        // print()
-
-        // print(rhs)
-        // print(rhs_recognizes_e)
-        // print()
-
         for rhs_i_state in rhs.states where rhs_i_state.isInitial {
             for lhs_f_state in lhs.states where lhs_f_state.isFinal {
                 lhs_f_state.addTransitions(rhs_i_state.transitions)
@@ -146,15 +137,7 @@ public class FiniteStateMachine: CustomStringConvertible {
 
         lhs.renumber()
 
-        // print(lhs)
-
-        // print()
-
         lhs.reduce()
-
-        // print(lhs)
-
-        // print("\n\n\n")
 
         return lhs
     }
@@ -167,17 +150,11 @@ public class FiniteStateMachine: CustomStringConvertible {
         let reachable_from_initial = as_relation.performStar(
             states.filter { $0.isInitial }.map{$0.stateNumber})
 
-        // print(reachable_from_initial)
-
         let can_reach_final: [Int] = as_relation.invert().performStar(states.filter { $0.isFinal }.map{$0.stateNumber})
-
-        // print(can_reach_final)
 
         let is_useful_state: [Bool] = states.map {
             can_reach_final.contains($0.stateNumber) && reachable_from_initial.contains($0.stateNumber)
         }
-
-        // print(is_useful_state)
 
         for i in (0..<states.count).reversed() {
             if !is_useful_state[i] {
@@ -323,11 +300,6 @@ public class FiniteStateMachine: CustomStringConvertible {
     static func forCharacter(_ character: Character) -> FiniteStateMachine {
         return fromTransition(Transition(name: String(character)))
     }
-
-    // private static func intAsString(_ integer: Int) -> String {
-    //     return (integer > 32 && integer < 127)
-    //         ? String(Character(UnicodeScalar(integer)!)) : String(integer)
-    // }
 
     static func forInteger(_ integer: Int) -> FiniteStateMachine {
         return fromTransition(
