@@ -293,7 +293,7 @@ public final class Constructor: Translator {
 
         Grammar.activeGrammar!.finalize()
 
-        print(Grammar.activeGrammar!.productions)
+        // print(Grammar.activeGrammar!.productions)
 
         Grammar.activeGrammar!.nonterminals.do {
             if Grammar.activeGrammar!.productionFor($0).isGoal()
@@ -376,6 +376,7 @@ public final class Constructor: Translator {
         var i = 0
 
         while i < readaheadStates.count {
+            // print(i)
             let raState = readaheadStates[i]
             let localDown = down.performRelationStar(raState.initialItems)
 
@@ -394,11 +395,11 @@ public final class Constructor: Translator {
             right.from(raState.items) { M, localRight in
                 // print(localRight.allTo())
                 let candidate = ReadaheadState(localRight.allTo())
-                var successor = readaheadStates.first {
-                    Set($0.initialItems).contains(candidate.initialItems)
+                var successor = readaheadStates.first { state in
+                    state.initialItems.allSatisfy{candidate.initialItems.contains($0)}
                 }
-                //print(candidate)
                 if successor == nil {
+                    print(candidate)
                     readaheadStates.append(candidate)
                     successor = candidate
                 }
@@ -427,7 +428,7 @@ public final class Constructor: Translator {
         // renumber()
         while i < readaheadStates.count {
             let raState = readaheadStates[i]
-            let finalItems = raState.initialItems.filter { $0.isFinal }
+            let finalItems = raState.items.filter { $0.isFinal }
             let partition = finalItems.partitionUsing { $0.leftPart }
             // print("\n")
             // print(raState.terseDescription)
@@ -684,8 +685,8 @@ public final class Constructor: Translator {
     }
 
     func optimize() {
-        eliminateStates()
-        readbackToShift()
+        // eliminateStates()
+        // readbackToShift()
     }
 
     func mergeStates() {
@@ -725,7 +726,7 @@ public final class Constructor: Translator {
         readaheadStates.do { raState in
             if (raState.transitions.allSatisfy {
                 $0.goto == raState.transitions[0].goto && !$0.label.isVisible()
-            }) {
+            }) && !raState.transitions.isEmpty {
                 replaceState(raState, with: raState.transitions[0].goto)
                 dead_states.append(raState)
             }
@@ -1210,7 +1211,57 @@ public final class Constructor: Translator {
         //of no concern to the student constructor... so that code is commented out..."
     }
 
-    var scannerTables: [Any] =
+    var scannerTables: [Any] = [["ScannerReadaheadTable", 1, (")", "RK", 30), ("*", "RK", 27), ("+", "RK", 22), ("-", "RK", 11), ("=", "RK", 3), ("?", "RK", 28), ("}", "RK", 31), ("&", "RK", 29), ("|", "RK", 36), ("]", "RK", 26), ("[", "RK", 32), ("0123456789", "RK", 5), ("(", "RK", 37), ("{", "RK", 33), (".", "RK", 12), ("ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz", "RK", 2), ("$", "R", 7), ("'", "R", 4), ("/", "R", 10), ("\"", "R", 9), ("#", "R", 8), ([10, 12, 13, 32, 9], "R", 6), ([256], "LK", 21), ],
+["ScannerReadaheadTable", 2, ("0123456789:ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz", "RK", 2), ("#$&'()*+-./=?[\"]{|}", "LK", 23), ([10, 12, 13, 256, 32], "LK", 23), ],
+["ScannerReadaheadTable", 3, (">", "RK", 38), ("#$&'()*+-./0123456789=?ABCDEFGHIJKLMNOPQRSTUVWXYZ[\"]_abcdefghijklmnopqrstuvwxyz{|}", "LK", 24), ([10, 12, 13, 256, 32], "LK", 24), ],
+["ScannerReadaheadTable", 4, ("!#$%&()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\"\\]^_abcdefghijklmnopqrstuvwxyz{|}~", "RK", 4), ("'", "R", 13), ([10, 12, 13, 147, 148, 32, 9, 96], "RK", 4), ([256], "LK", 39), ],
+["ScannerReadaheadTable", 5, ("0123456789", "RK", 5), ("#$&'()*+-./=?ABCDEFGHIJKLMNOPQRSTUVWXYZ[\"]_abcdefghijklmnopqrstuvwxyz{|}", "LK", 25), ([10, 12, 13, 256, 32], "LK", 25), ],
+["ScannerReadaheadTable", 6, ("!#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\"\\]^_abcdefghijklmnopqrstuvwxyz{|}~", "LK", 1), ([10, 12, 13, 32, 9], "R", 6), ([147, 148, 256, 96], "LK", 1), ],
+["ScannerReadaheadTable", 7, ("!#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\"\\]^_abcdefghijklmnopqrstuvwxyz{|}~", "RK", 41), ([10, 12, 13, 147, 148, 32, 9, 96], "RK", 41), ],
+["ScannerReadaheadTable", 8, ("ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz", "RK", 14), ("\"", "R", 15), ("'", "R", 16), ],
+["ScannerReadaheadTable", 9, ("!#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_abcdefghijklmnopqrstuvwxyz{|}~", "RK", 9), ("\"", "R", 17), ([10, 12, 13, 147, 148, 32, 9, 96], "RK", 9), ([256], "LK", 43), ],
+["ScannerReadaheadTable", 10, ("/", "R", 18), ("!#$%&'()*+,-.0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\"\\]^_abcdefghijklmnopqrstuvwxyz{|}~", "LK", 44), ([10, 12, 13, 32, 9], "L", 44), ([147, 148, 256, 96], "LK", 44), ],
+["ScannerReadaheadTable", 11, (">", "RK", 45), ("#$&'()*+-./0123456789=?ABCDEFGHIJKLMNOPQRSTUVWXYZ[\"]_abcdefghijklmnopqrstuvwxyz{|}", "LK", 34), ([10, 12, 13, 256, 32], "LK", 34), ],
+["ScannerReadaheadTable", 12, (".", "RK", 46), ("#$&'()*+-/0123456789=?ABCDEFGHIJKLMNOPQRSTUVWXYZ[\"]_abcdefghijklmnopqrstuvwxyz{|}", "LK", 35), ([10, 12, 13, 256, 32], "LK", 35), ],
+["ScannerReadaheadTable", 13, ("'", "RK", 4), ("#$&()*+-./0123456789=?ABCDEFGHIJKLMNOPQRSTUVWXYZ[\"]_abcdefghijklmnopqrstuvwxyz{|}", "LK", 40), ([10, 12, 13, 256, 32], "LK", 40), ],
+["ScannerReadaheadTable", 14, ("0123456789:ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz", "RK", 14), ("#$&'()*+-./=?[\"]{|}", "LK", 42), ([10, 12, 13, 256, 32], "LK", 42), ],
+["ScannerReadaheadTable", 15, ("!#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_abcdefghijklmnopqrstuvwxyz{|}~", "RK", 15), ("\"", "R", 19), ([10, 12, 13, 147, 148, 32, 9, 96], "RK", 15), ([256], "LK", 47), ],
+["ScannerReadaheadTable", 16, ("!#$%&()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\"\\]^_abcdefghijklmnopqrstuvwxyz{|}~", "RK", 16), ("'", "R", 20), ([10, 12, 13, 147, 148, 32, 9, 96], "RK", 16), ([256], "LK", 48), ],
+["ScannerReadaheadTable", 17, ("\"", "RK", 9), ("#$&'()*+-./0123456789=?ABCDEFGHIJKLMNOPQRSTUVWXYZ[]_abcdefghijklmnopqrstuvwxyz{|}", "LK", 40), ([10, 12, 13, 256, 32], "LK", 40), ],
+["ScannerReadaheadTable", 18, ("!#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\"\\]^_abcdefghijklmnopqrstuvwxyz{|}~", "R", 18), ([10, 12, 13], "R", 1), ([147, 148, 32, 9, 96], "R", 18), ([256], "LK", 1), ],
+["ScannerReadaheadTable", 19, ("\"", "RK", 15), ("#$&'()*+-./0123456789=?ABCDEFGHIJKLMNOPQRSTUVWXYZ[]_abcdefghijklmnopqrstuvwxyz{|}", "LK", 42), ([10, 12, 13, 256, 32], "LK", 42), ],
+["ScannerReadaheadTable", 20, ("'", "RK", 16), ("#$&()*+-./0123456789=?ABCDEFGHIJKLMNOPQRSTUVWXYZ[\"]_abcdefghijklmnopqrstuvwxyz{|}", "LK", 42), ([10, 12, 13, 256, 32], "LK", 42), ],
+["SemanticTable", 21, "buildToken", ["-|"], 1],
+["SemanticTable", 22, "buildToken", ["Plus"], 1],
+["SemanticTable", 23, "buildToken", ["walkIdentifier"], 1],
+["SemanticTable", 24, "buildToken", ["Equals"], 1],
+["SemanticTable", 25, "buildToken", ["walkInteger"], 1],
+["SemanticTable", 26, "buildToken", ["CloseSquare"], 1],
+["SemanticTable", 27, "buildToken", ["Star"], 1],
+["SemanticTable", 28, "buildToken", ["QuestionMark"], 1],
+["SemanticTable", 29, "buildToken", ["And"], 1],
+["SemanticTable", 30, "buildToken", ["CloseRound"], 1],
+["SemanticTable", 31, "buildToken", ["CloseCurly"], 1],
+["SemanticTable", 32, "buildToken", ["OpenSquare"], 1],
+["SemanticTable", 33, "buildToken", ["OpenCurly"], 1],
+["SemanticTable", 34, "buildToken", ["Minus"], 1],
+["SemanticTable", 35, "buildToken", ["Dot"], 1],
+["SemanticTable", 36, "buildToken", ["Or"], 1],
+["SemanticTable", 37, "buildToken", ["OpenRound"], 1],
+["SemanticTable", 38, "buildToken", ["FatRightArrow"], 1],
+["SemanticTable", 39, "syntaxError", ["missing end quote for single quoted string"], 40],
+["SemanticTable", 40, "buildToken", ["walkString"], 1],
+["SemanticTable", 41, "buildToken", ["walkCharacter"], 1],
+["SemanticTable", 42, "buildToken", ["walkSymbol"], 1],
+["SemanticTable", 43, "syntaxError", ["missing end quote for double quoted string"], 40],
+["SemanticTable", 44, "syntaxError", ["// is a comment, / alone is not valid"], 1],
+["SemanticTable", 45, "buildToken", ["RightArrow"], 1],
+["SemanticTable", 46, "buildToken", ["DotDot"], 1],
+["SemanticTable", 47, "syntaxError", ["missing end quote for double quoted string"], 42],
+["SemanticTable", 48, "syntaxError", ["missing end quote for single quoted string"], 42],
+]
+
+    var scannerrTables: [Any] =
         [
             [
                 "ScannerReadaheadTable", 1, ("]", "RK", 35), ("/", "R", 10), ("{", "RK", 36),
@@ -1393,7 +1444,7 @@ public final class Constructor: Translator {
                 41,
             ],
         ]
-
+    
     var parserTables: [Any] =
         [
             [

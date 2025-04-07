@@ -202,7 +202,7 @@ class ScannerReadaheadTable: Table, TableWithTransitionsWithIntKey {
             character == nil
             ? 256
             : Int(character!.asciiValue!); debug("\t\t with ascii `\(String (describing: charAsInt))`")
-        let pair = transitions[charAsInt]; print("\t\t transition for \(String (describing: character)) -> \(String (describing: pair)) ")
+        let pair = transitions[charAsInt]; debug("\t\t transition for \(String (describing: charAsInt)) -> \(String (describing: pair)) ")
         if pair != nil {
             let (attributes, goto) = pair!
             let isRead = attributes.contains("R")

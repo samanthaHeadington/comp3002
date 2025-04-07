@@ -113,14 +113,14 @@ public class FiniteStateMachine: CustomStringConvertible {
         let lhs_recognizes_e = lhs.canRecognizeE()
         let rhs_recognizes_e = rhs.canRecognizeE()
 
-        print(lhs)
-        print(lhs_recognizes_e)
+        // print(lhs)
+        // print(lhs_recognizes_e)
 
-        print()
+        // print()
 
-        print(rhs)
-        print(rhs_recognizes_e)
-        print()
+        // print(rhs)
+        // print(rhs_recognizes_e)
+        // print()
 
         for rhs_i_state in rhs.states where rhs_i_state.isInitial {
             for lhs_f_state in lhs.states where lhs_f_state.isFinal {
@@ -144,28 +144,40 @@ public class FiniteStateMachine: CustomStringConvertible {
             lhs.addState($0)
         }
 
+        lhs.renumber()
+
+        // print(lhs)
+
+        // print()
+
         lhs.reduce()
 
-        print(lhs)
+        // print(lhs)
+
+        // print("\n\n\n")
 
         return lhs
     }
 
     func reduce() {
-        let as_relation = Relation<FiniteStateMachineState, Label>(from: getAsTriples())
+        renumber()
+
+        let as_relation = Relation<Int, Label>(from: getAsTriples())
 
         let reachable_from_initial = as_relation.performStar(
-            states.filter { $0.isInitial })
+            states.filter { $0.isInitial }.map{$0.stateNumber})
 
-        print(reachable_from_initial)
+        // print(reachable_from_initial)
 
-        let can_reach_final: [FiniteStateMachineState] = as_relation.invert().performStar(states.filter { $0.isFinal })
+        let can_reach_final: [Int] = as_relation.invert().performStar(states.filter { $0.isFinal }.map{$0.stateNumber})
 
-        print(can_reach_final)
+        // print(can_reach_final)
 
         let is_useful_state: [Bool] = states.map {
-            can_reach_final.contains($0) && reachable_from_initial.contains($0)
+            can_reach_final.contains($0.stateNumber) && reachable_from_initial.contains($0.stateNumber)
         }
+
+        // print(is_useful_state)
 
         for i in (0..<states.count).reversed() {
             if !is_useful_state[i] {
@@ -202,8 +214,8 @@ public class FiniteStateMachine: CustomStringConvertible {
         return return_val
     }
 
-    func getAsTriples() -> [(FiniteStateMachineState, Label, FiniteStateMachineState)]{
-        var return_val: [(FiniteStateMachineState, Label, FiniteStateMachineState)] = []
+    func getAsTriples() -> [(Int, Label, Int)]{
+        var return_val: [(Int, Label, Int)] = []
 
         for state in states {
             return_val.append(contentsOf: state.getAsTriples())
@@ -363,7 +375,7 @@ public class FiniteStateMachine: CustomStringConvertible {
     }
 
     func addState(_ state: FiniteStateMachineState) {
-        states.appendIfIdenticalAbsent(state)
+        states.append(state)
     }
 
     public var description: String {
@@ -407,17 +419,17 @@ public class FiniteStateMachineState: Relatable {
     }
 
     func addTransitions(_ transitions: [Transition]) {
-        self.transitions.appendIfAbsent(transitions)
+        self.transitions.append(contentsOf: transitions)
     }
 
     func addTransition(_ transition: Transition) {
-        transitions.appendIfAbsent(transition)
+        transitions.append(transition)
     }
 
-    func getAsTriples() -> [(FiniteStateMachineState, Label, FiniteStateMachineState)] {
-        var return_val: [(FiniteStateMachineState, Label, FiniteStateMachineState)] = []
+    func getAsTriples() -> [(Int, Label, Int)] {
+        var return_val: [(Int, Label, Int)] = []
         for transition in transitions {
-            return_val.append((self, transition.label, transition.goto))
+            return_val.append((self.stateNumber, transition.label, transition.goto.stateNumber))
         }
         return return_val
     }
@@ -663,7 +675,7 @@ public class Transition: Relatable {
     }
 
     public static func == (lhs: Transition, rhs: Transition) -> Bool {
-        return lhs.label == rhs.label
+        return lhs.label == rhs.label && lhs.goto == rhs.goto
     }
 
     public func hash(into hasher: inout Hasher) {
