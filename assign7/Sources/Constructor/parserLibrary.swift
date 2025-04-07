@@ -448,11 +448,12 @@ class ReduceTable: Table, TableWithTransitionsWithIntKey {
         parser.treeStack.removeLast(removeCount)
 
         // self implemented hack (seems to allow bootstrapping?)
-        while self.transitions[parser.tableNumberStack.last!] == nil{
-            parser.tokenStack.removeLast()
-            parser.tableNumberStack.removeLast()
-            parser.treeStack.removeLast()
-        }
+        // while self.transitions[parser.tableNumberStack.last!] == nil{
+        //     print(parser.tableNumberStack)
+        //     parser.tokenStack.removeLast()
+        //     parser.tableNumberStack.removeLast()
+        //     parser.treeStack.removeLast()
+        // }
             
         // Use the top table number on the stack (`from table #`) and locate the pair (attr, `to table #`)
         // Case1: If you cannot find it, then it is a design error
@@ -469,6 +470,7 @@ class ReduceTable: Table, TableWithTransitionsWithIntKey {
             let isNode = attributes.contains("N")
             if isStack {
                 let newToken = Token(label: nonterminal, symbol: nonterminal)
+                print(newToken)
                 parser.tokenStack.append(newToken)
                 parser.tableNumberStack.append(goto)
                 parser.treeStack.append(isNode ? tree : nil)
@@ -758,6 +760,7 @@ public final class Parser: Transducer {
         while table.tableType != .AcceptTable {
             print(table)
             print(scanner.peekToken())
+            print("Number stack: \(tableNumberStack)")
             print("Table index: \(index)")
             print("RemoveCount: \(right - left + 1)")
             print("Tables walked: \(i)\n")

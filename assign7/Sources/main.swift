@@ -1,7 +1,7 @@
 import Foundation
 
 let input: String = try String(
-    contentsOf: URL(fileURLWithPath: "Sources/Grammars/realParserGrammar.txt"),
+    contentsOf: URL(fileURLWithPath: "Sources/Grammars/realScannerGrammar.txt"),
         encoding: .utf8)
 
 // first follow
